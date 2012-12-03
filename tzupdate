@@ -33,10 +33,9 @@ class autoTZ():
 
     def locateIP(self):
         self.conns["geolocate"].request("GET", self.uris["geolocate"]["path"])
-        ret = json.loads(self.conns["geolocate"].getresponse().read())
-        return ret["lat"], ret["lng"]
+        return json.loads(self.conns["geolocate"].getresponse().read())
 
-    def getTimeZoneFromCoords(self, lat, lng, user="tzupdate"):
+    def getTimeZoneFromCoords(self, lat, lng, user="tzupdate", **extras):
         self.conns["timezone"].request("GET", self.uris["timezone"]["path"] +
             urllib.urlencode({
                 "lat":lat,
@@ -51,7 +50,7 @@ class autoTZ():
 
 if __name__ == "__main__":
     a = autoTZ()
-    tz = a.getTimeZoneFromCoords(*a.locateIP())
+    tz = a.getTimeZoneFromCoords(**a.locateIP())
     tzPath = os.path.join(a.zoneInfoDir, tz)
     if not os.path.isfile(tzPath):
         raise MissingZoneInfoFile(tz)
