@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+
+import httplib
+import json
+import os
+import urllib
+
+class MissingZoneInfoFile(Exception):
+    pass
+
+class autoTZ():
+    def __init__(self, localTimeFile="/etc/localtime", zoneInfoDir="/usr/share/zoneinfo"):
+        self.localTimeFile = localTimeFile
+        self.zoneInfoDir = zoneInfoDir
+
+        self.uris = {
+            "geolocate":{
+                "host":"api.hostip.info",
+                "path":"/get_json.php?position=true"
+            },
+            "timezone":{
+                "host":"api.geonames.org",
+                "path":"/timezoneJSON?"
+            }
+        }
+        self.conns = self._connect()
+
+    def _connect(self):
+        connections = {}
+        for k, v in self.uris.items():
+            connections[k] = httplib.HTTPConnection(v["host"])
+        return connections
+
+    def locateIP(self):
+        self.conns["geolocate"].request("GET", self.uris["geolocate"]["path"])
+        ret = json.loads(self.conns["geolocate"].getresponse().read())
+        return ret["lat"], ret["lng"]
+
+    def getTimeZoneFromCoords(self, lat, lng, user="tzupdate"):
+        self.conns["timezone"].request("GET", self.uris["timezone"]["path"] +
+            urllib.urlencode({
+                "lat":lat,
+                "lng":lng,
+                "username":user # Please be respectful and use your own username
+                                # if you know you are going to make lots of
+                                # API requests.
+            })
+        )
+        ret = json.loads(self.conns["timezone"].getresponse().read())
+        return ret["timezoneId"]
+
+if __name__ == "__main__":
+    a = autoTZ()
+    tz = a.getTimeZoneFromCoords(*a.locateIP())
+    tzPath = os.path.join(a.zoneInfoDir, tz)
+    if not os.path.isfile(tzPath):
+        raise MissingZoneInfoFile(tz)
+    if os.path.exists(a.localTimeFile):
+        os.unlink(a.localTimeFile)
+    os.symlink(tzPath, a.localTimeFile)
+    print "Set timezone: %s" % tz
