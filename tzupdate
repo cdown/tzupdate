@@ -33,7 +33,7 @@ class autoTZ():
 
     def locateIP(self):
         self.conns["geolocate"].request("GET", self.uris["geolocate"]["path"])
-        return json.loads(self.conns["geolocate"].getresponse().read())
+        return json.load(self.conns["geolocate"].getresponse())
 
     def getTimeZoneFromCoords(self, lat, lng, user="tzupdate", **extras):
         self.conns["timezone"].request("GET", self.uris["timezone"]["path"] +
