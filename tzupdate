@@ -2,6 +2,7 @@
 
 """Automatically determine local time zone based on IP geolocation."""
 
+import argparse
 import httplib
 import json
 import os
@@ -56,6 +57,12 @@ class autoTZ():
         return ret["timezoneId"]
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("-d", "--dry-run", action="store_true", help="Don't update the localtime symlink")
+    parser.add_argument("-u", "--geonames-username", default="tzupdate", help="Override default GeoNames username")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Print what we are doing")
+    args = parser.parse_args()
+
     a = autoTZ()
     tz = a.getTimeZoneFromCoords(**a.locateIP())
     tzPath = os.path.join(a.zoneInfoDir, tz)
