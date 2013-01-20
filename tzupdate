@@ -6,6 +6,7 @@ import argparse
 import httplib
 import json
 import os
+import sys
 import urllib
 
 class MissingZoneInfoFile(Exception):
@@ -63,12 +64,31 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action="store_true", help="Print what we are doing")
     args = parser.parse_args()
 
+    if args.verbose:
+        def vprint(*args):
+            print " ".join(args)
+    else:
+        vprint = lambda *args: None
+
     a = autoTZ()
-    tz = a.getTimeZoneFromCoords(**a.locateIP())
+
+    vprint("Locating IP")
+    ipGeo = a.locateIP()
+    if ipGeo["lat"] == None or ipGeo["lng"] == None:
+        print >> sys.stderr, "Can't get latitude/longitude."
+        sys.exit(1)
+    vprint("Located at %d, %d" % (ipGeo["lat"], ipGeo["lng"]))
+
+    vprint("Getting timezone for coordinates")
+    tz = a.getTimeZoneFromCoords(**ipGeo)
+    vprint("Timezone is %s" % tz)
+
     tzPath = os.path.join(a.zoneInfoDir, tz)
     if not os.path.isfile(tzPath):
         raise MissingZoneInfoFile(tz)
     if os.path.exists(a.localTimeFile):
+        vprint("localtime file %s already exists, unlinking" % a.localTimeFile)
         os.unlink(a.localTimeFile)
+    vprint("Symlinking %s to %s" % (a.localTimeFile, tzPath))
     os.symlink(tzPath, a.localTimeFile)
     print "Set timezone: %s" % tz
