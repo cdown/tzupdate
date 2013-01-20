@@ -89,6 +89,11 @@ if __name__ == "__main__":
     tzPath = os.path.join(a.zoneInfoDir, tz)
     if not os.path.isfile(tzPath):
         raise MissingZoneInfoFile(tz)
+
+    if args.dry_run:
+        print "Exiting due to dry run"
+        sys.exit(0)
+
     if os.path.exists(a.localTimeFile):
         vprint("localtime file %s already exists, unlinking" % a.localTimeFile)
         os.unlink(a.localTimeFile)
