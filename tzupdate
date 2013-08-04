@@ -99,6 +99,7 @@ if __name__ == "__main__":
         timezone_path = os.path.join(zoneinfo_path, timezone)
         if not os.path.isfile(timezone_path):
             print("Unknown timezone: " + timezone_path, file=sys.stderr)
+            sys.exit(1)
 
         try:
             os.unlink(localtime_path)
