@@ -26,7 +26,6 @@ def location_from_ip():
     """
     Return location data for an IP using the IPInfoDB API.
 
-    :param ip: IP address to get location for
     :returns: latitude and longitude
     """
 
