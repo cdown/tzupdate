@@ -9,13 +9,9 @@ import os
 import sys
 import urllib
 
+
 zoneinfo_path = "/usr/share/zoneinfo"
 localtime_path = "/etc/localtime"
-
-
-class MissingZoneInfoFile(Exception):
-    """Raised when we can't find a timezone in our local zoneinfo database."""
-    pass
 
 
 def location_from_ip(ip=None):
