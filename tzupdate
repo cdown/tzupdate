@@ -91,7 +91,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--print-only",
         action="store_true",
-        help="print the timezone only, don't update the localtime symlink"
+        help="print the timezone, but don't update the system time"
     )
     args = parser.parse_args()
 
