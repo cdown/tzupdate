@@ -3,8 +3,8 @@
 """Automatically set local timezone based on IP geolocation."""
 
 from __future__ import print_function
-import errno
 import argparse
+import errno
 import json
 import os
 import sys
@@ -14,6 +14,7 @@ try:
     from urllib.parse import urlencode
 except ImportError:  # Python 2 fallback
     from urllib import urlopen, urlencode
+
 
 zoneinfo_path = "/usr/share/zoneinfo"
 localtime_path = "/etc/localtime"
