@@ -12,7 +12,7 @@ import sys
 try:
     from urllib.request import urlopen
     from urllib.parse import urlencode
-except ImportError:
+except ImportError:  # Python 2 fallback
     from urllib import urlopen, urlencode
 
 zoneinfo_path = "/usr/share/zoneinfo"
@@ -37,7 +37,7 @@ def location_from_ip():
 
     try:
         res_encoding = res_handle.headers.get_content_charset()
-    except AttributeError:
+    except AttributeError:  # Python 2 fallback
         res_encoding = res_handle.headers.getparam("charset")
 
     res_data = json.loads(res_handle.read().decode(res_encoding))
@@ -69,7 +69,7 @@ def timezone_from_location(coords):
 
     try:
         res_encoding = res_handle.headers.get_content_charset()
-    except AttributeError:
+    except AttributeError:  # Python 2 fallback
         res_encoding = res_handle.headers.getparam("charset")
 
     res_data = json.loads(res_handle.read().decode(res_encoding))
