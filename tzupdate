@@ -9,6 +9,8 @@ import os
 import sys
 import urllib
 
+zoneinfo_path = "/usr/share/zoneinfo"
+localtime_path = "/etc/localtime"
 
 class MissingZoneInfoFile(Exception):
     """Raised when we can't find a timezone in our local zoneinfo database."""
@@ -35,49 +37,34 @@ def location_from_ip(ip=None):
     res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
     res_data = json.load(res_handle)
 
-    return {
+    coords = {
         "latitude": res_data["latitude"],
         "longitude": res_data["longitude"],
     }
 
-class TZUpdate():
-    """Automatically determine local time zone based on IP geolocation."""
-    def __init__(self, localtime_path="/etc/localtime", zoneinfo_path="/usr/share/zoneinfo"):
-        self.localtime_path = localtime_path
-        self.zoneinfo_path = zoneinfo_path
+    return coords
 
-        self.uris = {
-            "geolocate": {
-                "host": "api.ipinfodb.com",
-                "path": "/v3/ip-city/?"
-            },
-            "timezone": {
-                "host": "api.geonames.org",
-                "path": "/timezoneJSON?"
-            }
-        }
-        self.conns = self._connect()
+def timezone_from_location(coords):
+    """
+    Return the timezone for a set of coordinates using the GeoNames API.
 
-    def _connect(self):
-        """Connect to APIs."""
-        connections = {}
-        for k, v in self.uris.items():
-            connections[k] = httplib.HTTPConnection(v["host"])
-        return connections
+    :param coords: latitude and longitude
+    :returns: timezone
+    """
 
-    def tz_from_coords(self, latitude, longitude, user="tzupdate", **extras):
-        """Get the timezone for a latitude/longitude."""
-        self.conns["timezone"].request("GET", self.uris["timezone"]["path"] +
-            urllib.urlencode({
-                "lat":latitude,
-                "lng":longitude,
-                "username":user # Please be respectful and use your own username
-                                # if you know you are going to make lots of
-                                # API requests.
-            })
-        )
-        ret = json.loads(self.conns["timezone"].getresponse().read())
-        return ret["timezoneId"]
+    url = "http://api.geonames.org/timezoneJSON?"
+    url_params = {
+        "username": "tzupdate",
+        "lat": coords["latitude"],
+        "lng": coords["longitude"],
+    }
+
+    res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
+    res_data = json.load(res_handle)
+
+    timezone = res_data["timezoneId"]
+
+    return timezone
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
@@ -93,17 +80,11 @@ if __name__ == "__main__":
     else:
         vprint = lambda *args: None
 
-    a = TZUpdate()
+    coords = location_from_ip()
 
-    vprint("Locating IP")
-    geolocation_data = location_from_ip()
-    vprint("Located at %(latitude)s, %(longitude)s" % geolocation_data)
+    tz = timezone_from_location(coords)
 
-    vprint("Getting timezone for coordinates")
-    tz = a.tz_from_coords(**geolocation_data)
-    vprint("Timezone is %s" % tz)
-
-    tz_path = os.path.join(a.zoneinfo_path, tz)
+    tz_path = os.path.join(zoneinfo_path, tz)
     if not os.path.isfile(tz_path):
         raise MissingZoneInfoFile(tz)
 
@@ -111,9 +92,9 @@ if __name__ == "__main__":
         print "Exiting due to dry run"
         sys.exit(0)
 
-    if os.path.exists(a.localtime_path):
-        vprint("localtime file %s already exists, unlinking" % a.localtime_path)
-        os.unlink(a.localtime_path)
-    vprint("Symlinking %s to %s" % (a.localtime_path, tz_path))
-    os.symlink(tz_path, a.localtime_path)
+    if os.path.exists(localtime_path):
+        vprint("localtime file %s already exists, unlinking" % localtime_path)
+        os.unlink(localtime_path)
+    vprint("Symlinking %s to %s" % (localtime_path, tz_path))
+    os.symlink(tz_path, localtime_path)
     print "Set timezone: %s" % tz
