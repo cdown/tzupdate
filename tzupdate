@@ -1,102 +1,90 @@
 #!/usr/bin/env python
 
-"""Automatically determine local time zone based on IP geolocation."""
+"""Automatically set local timezone based on IP geolocation."""
 
+import errno
 import argparse
-import httplib
 import json
 import os
 import sys
 import urllib
 
-class MissingZoneInfoFile(Exception):
-    """Raised when we can't find a timezone in our local zoneinfo database."""
-    pass
 
-class autoTZ():
-    """Automatically determine local time zone based on IP geolocation."""
-    def __init__(self, localTimeFile="/etc/localtime", zoneInfoDir="/usr/share/zoneinfo"):
-        self.localTimeFile = localTimeFile
-        self.zoneInfoDir = zoneInfoDir
+zoneinfo_path = "/usr/share/zoneinfo"
+localtime_path = "/etc/localtime"
 
-        self.uris = {
-            "geolocate":{
-                "host":"api.ipinfodb.com",
-                "path":"/v3/ip-city/?"
-            },
-            "timezone":{
-                "host":"api.geonames.org",
-                "path":"/timezoneJSON?"
-            }
-        }
-        self.conns = self._connect()
 
-    def _connect(self):
-        """Connect to APIs."""
-        connections = {}
-        for k, v in self.uris.items():
-            connections[k] = httplib.HTTPConnection(v["host"])
-        return connections
+def location_from_ip():
+    """
+    Return location data for an IP using the IPInfoDB API.
 
-    def locateIP(self, key="c253fddcfa96b60155aa66fb51b20cbadbcfa2020b2d27a89d4554ac2799b935"):
-        """Get geolocation information for our IP."""
-        self.conns["geolocate"].request("GET", self.uris["geolocate"]["path"] +
-            urllib.urlencode({
-                "key":key,
-                "format":"json"
-            })
-        )
-        return json.load(self.conns["geolocate"].getresponse())
+    :returns: latitude and longitude
+    """
 
-    def getTimeZoneFromCoords(self, latitude, longitude, user="tzupdate", **extras):
-        """Get the timezone for a latitude/longitude."""
-        self.conns["timezone"].request("GET", self.uris["timezone"]["path"] +
-            urllib.urlencode({
-                "lat":latitude,
-                "lng":longitude,
-                "username":user # Please be respectful and use your own username
-                                # if you know you are going to make lots of
-                                # API requests.
-            })
-        )
-        ret = json.loads(self.conns["timezone"].getresponse().read())
-        return ret["timezoneId"]
+    url = "http://api.ipinfodb.com/v3/ip-city/?"
+    url_params = {
+        "key": "c253fddcfa96b60155aa66fb51b20cba"
+               "dbcfa2020b2d27a89d4554ac2799b935",
+        "format": "json",
+    }
+
+    res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
+    res_data = json.load(res_handle)
+
+    coords = {
+        "latitude": res_data["latitude"],
+        "longitude": res_data["longitude"],
+    }
+
+    return coords
+
+
+def timezone_from_location(coords):
+    """
+    Return the timezone for a set of coordinates using the GeoNames API.
+
+    :param coords: latitude and longitude
+    :returns: timezone
+    """
+
+    url = "http://api.geonames.org/timezoneJSON?"
+    url_params = {
+        "username": "tzupdate",
+        "lat": coords["latitude"],
+        "lng": coords["longitude"],
+    }
+
+    res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
+    res_data = json.load(res_handle)
+
+    timezone = res_data["timezoneId"]
+
+    return timezone
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-d", "--dry-run", action="store_true", help="Don't update the localtime symlink")
-    parser.add_argument("-i", "--ipinfodb-api-key", default="c253fddcfa96b60155aa66fb51b20cbadbcfa2020b2d27a89d4554ac2799b935", help="Override default API key for IPInfoDB")
-    parser.add_argument("-u", "--geonames-username", default="tzupdate", help="Override default GeoNames username")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Print what we are doing")
+    parser.add_argument(
+        "-p", "--print-only",
+        action="store_true",
+        help="print the timezone only, don't update the localtime symlink"
+    )
     args = parser.parse_args()
 
-    if args.verbose:
-        def vprint(*args):
-            print " ".join(args)
-    else:
-        vprint = lambda *args: None
+    coords = location_from_ip()
+    timezone = timezone_from_location(coords)
 
-    a = autoTZ()
+    if not args.print_only:
+        timezone_path = os.path.join(zoneinfo_path, timezone)
+        if not os.path.isfile(timezone_path):
+            print >> sys.stderr, "Unknown timezone: " + timezone_path
 
-    vprint("Locating IP")
-    ipGeo = a.locateIP(key=args.ipinfodb_api_key)
-    vprint("Located at %(latitude)s, %(longitude)s" % ipGeo)
+        try:
+            os.unlink(localtime_path)
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                raise
 
-    vprint("Getting timezone for coordinates")
-    tz = a.getTimeZoneFromCoords(**ipGeo)
-    vprint("Timezone is %s" % tz)
+        os.symlink(timezone_path, localtime_path)
 
-    tzPath = os.path.join(a.zoneInfoDir, tz)
-    if not os.path.isfile(tzPath):
-        raise MissingZoneInfoFile(tz)
-
-    if args.dry_run:
-        print "Exiting due to dry run"
-        sys.exit(0)
-
-    if os.path.exists(a.localTimeFile):
-        vprint("localtime file %s already exists, unlinking" % a.localTimeFile)
-        os.unlink(a.localTimeFile)
-    vprint("Symlinking %s to %s" % (a.localTimeFile, tzPath))
-    os.symlink(tzPath, a.localTimeFile)
-    print "Set timezone: %s" % tz
+    print timezone
