@@ -2,13 +2,18 @@
 
 """Automatically set local timezone based on IP geolocation."""
 
+from __future__ import print_function
 import errno
 import argparse
 import json
 import os
 import sys
-import urllib
 
+try:
+    from urllib.request import urlopen
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlopen, urlencode
 
 zoneinfo_path = "/usr/share/zoneinfo"
 localtime_path = "/etc/localtime"
@@ -28,8 +33,14 @@ def location_from_ip():
         "format": "json",
     }
 
-    res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
-    res_data = json.load(res_handle)
+    res_handle = urlopen(url + urlencode(url_params))
+
+    try:
+        res_encoding = res_handle.headers.get_content_charset()
+    except AttributeError:
+        res_encoding = res_handle.headers.getparam("charset")
+
+    res_data = json.loads(res_handle.read().decode(res_encoding))
 
     coords = {
         "latitude": res_data["latitude"],
@@ -54,8 +65,14 @@ def timezone_from_location(coords):
         "lng": coords["longitude"],
     }
 
-    res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
-    res_data = json.load(res_handle)
+    res_handle = urlopen(url + urlencode(url_params))
+
+    try:
+        res_encoding = res_handle.headers.get_content_charset()
+    except AttributeError:
+        res_encoding = res_handle.headers.getparam("charset")
+
+    res_data = json.loads(res_handle.read().decode(res_encoding))
 
     timezone = res_data["timezoneId"]
 
@@ -77,14 +94,14 @@ if __name__ == "__main__":
     if not args.print_only:
         timezone_path = os.path.join(zoneinfo_path, timezone)
         if not os.path.isfile(timezone_path):
-            print >> sys.stderr, "Unknown timezone: " + timezone_path
+            print("Unknown timezone: " + timezone_path, file=sys.stderr)
 
         try:
             os.unlink(localtime_path)
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
 
         os.symlink(timezone_path, localtime_path)
 
-    print timezone
+    print(timezone)
