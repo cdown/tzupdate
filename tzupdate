@@ -13,9 +13,11 @@ import urllib
 zoneinfo_path = "/usr/share/zoneinfo"
 localtime_path = "/etc/localtime"
 
+
 class MissingZoneInfoFile(Exception):
     """Raised when we can't find a timezone in our local zoneinfo database."""
     pass
+
 
 def location_from_ip(ip=None):
     """
@@ -27,7 +29,7 @@ def location_from_ip(ip=None):
 
     url = "http://api.ipinfodb.com/v3/ip-city/?"
     url_params = {
-        "key": "c253fddcfa96b60155aa66fb51b20cba" \
+        "key": "c253fddcfa96b60155aa66fb51b20cba"
                "dbcfa2020b2d27a89d4554ac2799b935",
         "format": "json",
     }
@@ -44,6 +46,7 @@ def location_from_ip(ip=None):
     }
 
     return coords
+
 
 def timezone_from_location(coords):
     """
@@ -67,6 +70,7 @@ def timezone_from_location(coords):
 
     return timezone
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -82,7 +86,7 @@ if __name__ == "__main__":
     if not args.print_only:
         timezone_path = os.path.join(zoneinfo_path, timezone)
         if not os.path.isfile(timezone_path):
-            print >> sys.stderr, "Unknown timezone on this system: " + timezone_path
+            print >> sys.stderr, "Unknown timezone: " + timezone_path
 
         try:
             os.unlink(localtime_path)
