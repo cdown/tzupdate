@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name = "tzupdate",
-    version = "0.001",
+    version = "0.1.0",
     description = "Automatically determine and set localtime based on IP.",
     author = "Chris Down",
     author_email = "chris@illco.de",
