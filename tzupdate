@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-"""Automatically determine local time zone based on IP geolocation."""
+"""Automatically set local timezone based on IP geolocation."""
 
+import errno
 import argparse
 import httplib
 import json
@@ -68,33 +69,27 @@ def timezone_from_location(coords):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-d", "--dry-run", action="store_true", help="Don't update the localtime symlink")
-    parser.add_argument("-i", "--ipinfodb-api-key", default="c253fddcfa96b60155aa66fb51b20cbadbcfa2020b2d27a89d4554ac2799b935", help="Override default API key for IPInfoDB")
-    parser.add_argument("-u", "--geonames-username", default="tzupdate", help="Override default GeoNames username")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Print what we are doing")
+    parser.add_argument(
+        "-p", "--print-only",
+        action="store_true",
+        help="print the timezone only, don't update the localtime symlink"
+    )
     args = parser.parse_args()
 
-    if args.verbose:
-        def vprint(*args):
-            print " ".join(args)
-    else:
-        vprint = lambda *args: None
-
     coords = location_from_ip()
+    timezone = timezone_from_location(coords)
 
-    tz = timezone_from_location(coords)
+    if not args.print_only:
+        timezone_path = os.path.join(zoneinfo_path, timezone)
+        if not os.path.isfile(timezone_path):
+            print >> sys.stderr, "Unknown timezone on this system: " + timezone_path
 
-    tz_path = os.path.join(zoneinfo_path, tz)
-    if not os.path.isfile(tz_path):
-        raise MissingZoneInfoFile(tz)
+        try:
+            os.unlink(localtime_path)
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                raise
 
-    if args.dry_run:
-        print "Exiting due to dry run"
-        sys.exit(0)
+        os.symlink(timezone_path, localtime_path)
 
-    if os.path.exists(localtime_path):
-        vprint("localtime file %s already exists, unlinking" % localtime_path)
-        os.unlink(localtime_path)
-    vprint("Symlinking %s to %s" % (localtime_path, tz_path))
-    os.symlink(tz_path, localtime_path)
-    print "Set timezone: %s" % tz
+    print timezone
