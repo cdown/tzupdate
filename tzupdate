@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-"""Automatically set local timezone based on IP geolocation."""
+"""
+Set the local timezone based on IP geolocation.
+"""
 
 from __future__ import print_function
 import argparse

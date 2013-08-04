@@ -4,17 +4,10 @@ from distutils.core import setup
 
 setup(
     name = "tzupdate",
-    version = "0.1.0",
-    description = "Automatically determine and set localtime based on IP.",
+    version = "0.2.1",
+    description = "Set the local timezone based on IP geolocation.",
     author = "Chris Down",
-    author_email = "chris@illco.de",
-    url = "http://illco.de",
-    packages = (
-        ""
-    ),
-    scripts = ( "tzupdate", ),
-    long_description = """
-tzupdate is a utility to automatically determine and set your computer's
-localtime based upon a geolocation of your WAN IP.
-"""
+    author_email = "chris@chrisdown.name",
+    url = "http://chrisdown.name",
+    scripts = [ "tzupdate" ],
 )
