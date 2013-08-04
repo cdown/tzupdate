@@ -4,7 +4,6 @@
 
 import errno
 import argparse
-import httplib
 import json
 import os
 import sys
