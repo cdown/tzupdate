@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--print-only",
         action="store_true",
-        help="print the timezone, but don't update the system time"
+        help="print the timezone, but don't update the system timezone"
     )
     args = parser.parse_args()
 
