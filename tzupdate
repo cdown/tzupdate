@@ -14,11 +14,10 @@ zoneinfo_path = "/usr/share/zoneinfo"
 localtime_path = "/etc/localtime"
 
 
-def location_from_ip(ip=None):
+def location_from_ip():
     """
     Return location data for an IP using the IPInfoDB API.
 
-    :param ip: IP address to get location for
     :returns: latitude and longitude
     """
 
@@ -28,9 +27,6 @@ def location_from_ip(ip=None):
                "dbcfa2020b2d27a89d4554ac2799b935",
         "format": "json",
     }
-
-    if ip is not None:
-        url_params["ip"] = ip
 
     res_handle = urllib.urlopen(url + urllib.urlencode(url_params))
     res_data = json.load(res_handle)
