@@ -108,7 +108,7 @@ if __name__ == "__main__":
     coords = t.location_from_ip()
     timezone = t.timezone_from_location(coords)
 
-    if args.print_only is False:
+    if not args.print_only:
         timezone_path = os.path.join(zoneinfo_path, timezone)
         if not os.path.isfile(timezone_path):
             print("Unknown timezone: " + timezone_path, file=sys.stderr)
