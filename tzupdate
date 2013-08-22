@@ -21,67 +21,78 @@ except ImportError:  # Python 2 fallback
 zoneinfo_path = "/usr/share/zoneinfo"
 localtime_path = "/etc/localtime"
 
-
-def location_from_ip():
-    """
-    Return location data for an IP using the IPInfoDB API.
-
-    :returns: latitude and longitude
-    """
-
-    url = "http://api.ipinfodb.com/v3/ip-city/?"
-    url_params = {
-        "key": "c253fddcfa96b60155aa66fb51b20cba"
-               "dbcfa2020b2d27a89d4554ac2799b935",
-        "format": "json",
-    }
-
-    res_handle = urlopen(url + urlencode(url_params))
-
-    try:
-        res_encoding = res_handle.headers.get_content_charset()
-    except AttributeError:  # Python 2 fallback
-        res_encoding = res_handle.headers.getparam("charset")
-
-    res_data = json.loads(res_handle.read().decode(res_encoding))
-
-    coords = (
-        res_data["latitude"],
-        res_data["longitude"],
-    )
-
-    return coords
+class TimeZoneUpdate(object):
+    def __init__(self):
+        self.auth = {
+            "ipinfodb": {
+                "api_key": "c253fddcfa96b60155aa66fb51b20cba"
+                           "dbcfa2020b2d27a89d4554ac2799b935",
+            },
+            "geonames": {
+                "username": "tzupdate",
+            },
+        }
 
 
-def timezone_from_location(coords):
-    """
-    Return the timezone for a set of coordinates using the GeoNames API.
+    def location_from_ip(self):
+        """
+        Return location data for an IP using the IPInfoDB API.
 
-    :param coords: latitude and longitude
-    :returns: timezone
-    """
+        :returns: latitude and longitude
+        """
 
-    url = "http://api.geonames.org/timezoneJSON?"
+        url = "http://api.ipinfodb.com/v3/ip-city/?"
+        url_params = {
+            "key": self.auth["ipinfodb"]["api_key"],
+            "format": "json",
+        }
 
-    latitude, longitude = coords
-    url_params = {
-        "username": "tzupdate",
-        "lat": latitude,
-        "lng": longitude,
-    }
+        res_handle = urlopen(url + urlencode(url_params))
 
-    res_handle = urlopen(url + urlencode(url_params))
+        try:
+            res_encoding = res_handle.headers.get_content_charset()
+        except AttributeError:  # Python 2 fallback
+            res_encoding = res_handle.headers.getparam("charset")
 
-    try:
-        res_encoding = res_handle.headers.get_content_charset()
-    except AttributeError:  # Python 2 fallback
-        res_encoding = res_handle.headers.getparam("charset")
+        res_data = json.loads(res_handle.read().decode(res_encoding))
 
-    res_data = json.loads(res_handle.read().decode(res_encoding))
+        coords = (
+            res_data["latitude"],
+            res_data["longitude"],
+        )
 
-    timezone = res_data["timezoneId"]
+        return coords
 
-    return timezone
+
+    def timezone_from_location(self, coords):
+        """
+        Return the timezone for a set of coordinates using the GeoNames API.
+
+        :param coords: latitude and longitude
+        :returns: timezone
+        """
+
+        url = "http://api.geonames.org/timezoneJSON?"
+
+        latitude, longitude = coords
+        url_params = {
+            "username": self.auth["geonames"]["username"],
+            "lat": latitude,
+            "lng": longitude,
+        }
+
+        res_handle = urlopen(url + urlencode(url_params))
+
+        try:
+            res_encoding = res_handle.headers.get_content_charset()
+        except AttributeError:  # Python 2 fallback
+            res_encoding = res_handle.headers.getparam("charset")
+
+        res_data = json.loads(res_handle.read().decode(res_encoding))
+
+        timezone = res_data["timezoneId"]
+
+        return timezone
 
 
 if __name__ == "__main__":
@@ -93,8 +104,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    coords = location_from_ip()
-    timezone = timezone_from_location(coords)
+    t = TimeZoneUpdate()
+    coords = t.location_from_ip()
+    timezone = t.timezone_from_location(coords)
 
     if args.print_only is False:
         timezone_path = os.path.join(zoneinfo_path, timezone)
