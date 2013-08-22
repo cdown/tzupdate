@@ -18,9 +18,6 @@ except ImportError:  # Python 2 fallback
     from urllib import urlopen, urlencode
 
 
-zoneinfo_path = "/usr/share/zoneinfo"
-localtime_path = "/etc/localtime"
-
 class TimeZoneUpdate(object):
     def __init__(self):
         self.auth = {
@@ -32,7 +29,10 @@ class TimeZoneUpdate(object):
                 "username": "tzupdate",
             },
         }
-
+        self.path = {
+            "zoneinfo": "/usr/share/zoneinfo",
+            "localtime": "/etc/localtime",
+        }
 
     def location_from_ip(self):
         """
@@ -62,7 +62,6 @@ class TimeZoneUpdate(object):
         )
 
         return coords
-
 
     def timezone_from_location(self, coords):
         """
@@ -96,30 +95,31 @@ class TimeZoneUpdate(object):
 
 
 if __name__ == "__main__":
+    t = TimeZoneUpdate()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-p", "--print-only",
         action="store_true",
-        help="print the timezone, but don't update " + localtime_path
+        help="print the timezone, but don't update " + t.path["localtime"]
     )
     args = parser.parse_args()
 
-    t = TimeZoneUpdate()
     coords = t.location_from_ip()
     timezone = t.timezone_from_location(coords)
 
     if not args.print_only:
-        timezone_path = os.path.join(zoneinfo_path, timezone)
+        timezone_path = os.path.join(t.path["zoneinfo"], timezone)
         if not os.path.isfile(timezone_path):
             print("Unknown timezone: " + timezone_path, file=sys.stderr)
             sys.exit(1)
 
         try:
-            os.unlink(localtime_path)
+            os.unlink(t.path["localtime"])
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
 
-        os.symlink(timezone_path, localtime_path)
+        os.symlink(timezone_path, t.path["localtime"])
 
     print(timezone)
