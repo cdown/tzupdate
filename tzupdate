@@ -34,10 +34,11 @@ class TimeZoneUpdate(object):
             "localtime": "/etc/localtime",
         }
 
-    def location_from_ip(self):
+    def location_from_ip(self, ip=None):
         """
         Return location data for an IP using the IPInfoDB API.
 
+        :param ip: an IP address to use to override automatically detecting it
         :returns: latitude and longitude
         """
 
@@ -46,6 +47,9 @@ class TimeZoneUpdate(object):
             "key": self.auth["ipinfodb"]["api_key"],
             "format": "json",
         }
+
+        if ip is not None:
+            url_params["ip"] = ip
 
         res_handle = urlopen(url + urlencode(url_params))
 
@@ -103,9 +107,13 @@ if __name__ == "__main__":
         action="store_true",
         help="print the timezone, but don't update " + t.path["localtime"]
     )
+    parser.add_argument(
+        "-a", "--ip",
+        help="use this IP instead of automatically detecting it"
+    )
     args = parser.parse_args()
 
-    coords = t.location_from_ip()
+    coords = t.location_from_ip(ip=args.ip)
     timezone = t.timezone_from_location(coords)
 
     if not args.print_only:
