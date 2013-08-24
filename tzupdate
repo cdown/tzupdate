@@ -18,6 +18,13 @@ except ImportError:  # Python 2 fallback
     from urllib import urlopen, urlencode
 
 
+class IPInfoDBAPIError(Exception):
+    """
+    Raised when the IPInfoDB API returns an error.
+    """
+    pass
+
+
 class TimeZoneUpdate(object):
     def __init__(self):
         self.auth = {
@@ -58,7 +65,19 @@ class TimeZoneUpdate(object):
         except AttributeError:  # Python 2 fallback
             res_encoding = res_handle.headers.getparam("charset")
 
-        res_data = json.loads(res_handle.read().decode(res_encoding))
+        res_data_raw = res_handle.read().decode(res_encoding)
+
+        try:
+            res_data = json.loads(res_data_raw)
+        except ValueError:
+            # The JSON failed to decode, this probably means that IPInfoDB
+            # returned an error. When it does so, it no longer returns JSON for
+            # some reason.
+            error = res_data_raw.split(";")[1]
+            if error:
+                raise IPInfoDBAPIError(error)
+            else:
+                raise
 
         coords = (
             res_data["latitude"],
@@ -113,7 +132,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    coords = t.location_from_ip(ip=args.ip)
+    try:
+        coords = t.location_from_ip(ip=args.ip)
+    except IPInfoDBAPIError as e:
+        print("IPInfoDB returned an error: " + str(e), file=sys.stderr)
+        sys.exit(3)
+
     timezone = t.timezone_from_location(coords)
 
     if timezone is None:
