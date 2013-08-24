@@ -72,7 +72,7 @@ class TimeZoneUpdate(object):
         Return the timezone for a set of coordinates using the GeoNames API.
 
         :param coords: latitude and longitude
-        :returns: timezone
+        :returns: timezone, or None if none is available
         """
 
         url = "http://api.geonames.org/timezoneJSON?"
@@ -93,7 +93,7 @@ class TimeZoneUpdate(object):
 
         res_data = json.loads(res_handle.read().decode(res_encoding))
 
-        timezone = res_data["timezoneId"]
+        timezone = res_data.get("timezoneId")
 
         return timezone
 
@@ -115,6 +115,10 @@ if __name__ == "__main__":
 
     coords = t.location_from_ip(ip=args.ip)
     timezone = t.timezone_from_location(coords)
+
+    if timezone is None:
+        print("No timezone available for this IP.", file=sys.stderr)
+        sys.exit(2)
 
     if not args.print_only:
         timezone_path = os.path.join(t.path["zoneinfo"], timezone)
