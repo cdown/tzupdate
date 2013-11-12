@@ -32,13 +32,6 @@ PATH = {
 }
 
 
-class IPInfoDBAPIError(Exception):
-    """
-    Raised when the IPInfoDB API returns an error.
-    """
-    pass
-
-
 class TimeZoneUpdate(object):
     def location_from_ip(self, ip=None):
         """
@@ -74,7 +67,7 @@ class TimeZoneUpdate(object):
             # some reason.
             error = res_data_raw.split(";")[1]
             if error:
-                raise IPInfoDBAPIError(error)
+                raise LookupError(error)
             else:
                 raise
 
@@ -133,7 +126,7 @@ if __name__ == "__main__":
 
     try:
         coords = t.location_from_ip(ip=args.ip)
-    except IPInfoDBAPIError as e:
+    except LookupError as e:
         print("IPInfoDB returned an error: " + str(e), file=sys.stderr)
         sys.exit(3)
 
