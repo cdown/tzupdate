@@ -17,6 +17,20 @@ try:
 except ImportError:  # Python 2 fallback
     from urllib import urlopen, urlencode
 
+AUTH = {
+    "ipinfodb": {
+        "api_key": "c253fddcfa96b60155aa66fb51b20cba"
+                   "dbcfa2020b2d27a89d4554ac2799b935",
+    },
+    "geonames": {
+        "username": "tzupdate",
+    },
+}
+PATH = {
+    "zoneinfo": "/usr/share/zoneinfo",
+    "localtime": "/etc/localtime",
+}
+
 
 class IPInfoDBAPIError(Exception):
     """
@@ -26,21 +40,6 @@ class IPInfoDBAPIError(Exception):
 
 
 class TimeZoneUpdate(object):
-    def __init__(self):
-        self.auth = {
-            "ipinfodb": {
-                "api_key": "c253fddcfa96b60155aa66fb51b20cba"
-                           "dbcfa2020b2d27a89d4554ac2799b935",
-            },
-            "geonames": {
-                "username": "tzupdate",
-            },
-        }
-        self.path = {
-            "zoneinfo": "/usr/share/zoneinfo",
-            "localtime": "/etc/localtime",
-        }
-
     def location_from_ip(self, ip=None):
         """
         Return location data for an IP using the IPInfoDB API.
@@ -51,7 +50,7 @@ class TimeZoneUpdate(object):
 
         url = "http://api.ipinfodb.com/v3/ip-city/?"
         url_params = {
-            "key": self.auth["ipinfodb"]["api_key"],
+            "key": AUTH["ipinfodb"]["api_key"],
             "format": "json",
         }
 
@@ -98,7 +97,7 @@ class TimeZoneUpdate(object):
 
         latitude, longitude = coords
         url_params = {
-            "username": self.auth["geonames"]["username"],
+            "username": AUTH["geonames"]["username"],
             "lat": latitude,
             "lng": longitude,
         }
@@ -124,7 +123,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--print-only",
         action="store_true",
-        help="print the timezone, but don't update " + t.path["localtime"]
+        help="print the timezone, but don't update " + PATH["localtime"]
     )
     parser.add_argument(
         "-a", "--ip",
@@ -145,17 +144,17 @@ if __name__ == "__main__":
         sys.exit(2)
 
     if not args.print_only:
-        timezone_path = os.path.join(t.path["zoneinfo"], timezone)
+        timezone_path = os.path.join(PATH["zoneinfo"], timezone)
         if not os.path.isfile(timezone_path):
             print("Unknown timezone: " + timezone_path, file=sys.stderr)
             sys.exit(1)
 
         try:
-            os.unlink(t.path["localtime"])
+            os.unlink(PATH["localtime"])
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
 
-        os.symlink(timezone_path, t.path["localtime"])
+        os.symlink(timezone_path, PATH["localtime"])
 
     print(timezone)
