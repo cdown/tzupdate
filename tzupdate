@@ -32,86 +32,84 @@ PATH = {
 }
 
 
-class TimeZoneUpdate(object):
-    def location_from_ip(self, ip=None):
-        """
-        Return location data for an IP using the IPInfoDB API.
+def location_from_ip(ip=None):
+    """
+    Return location data for an IP using the IPInfoDB API.
 
-        :param ip: an IP address to use to override automatically detecting it
-        :returns: latitude and longitude
-        """
+    :param ip: an IP address to use to override automatically detecting it
+    :returns: latitude and longitude
+    """
 
-        url = "http://api.ipinfodb.com/v3/ip-city/?"
-        url_params = {
-            "key": AUTH["ipinfodb"]["api_key"],
-            "format": "json",
-        }
+    url = "http://api.ipinfodb.com/v3/ip-city/?"
+    url_params = {
+        "key": AUTH["ipinfodb"]["api_key"],
+        "format": "json",
+    }
 
-        if ip is not None:
-            url_params["ip"] = ip
+    if ip is not None:
+        url_params["ip"] = ip
 
-        res_handle = urlopen(url + urlencode(url_params))
+    res_handle = urlopen(url + urlencode(url_params))
 
-        try:
-            res_encoding = res_handle.headers.get_content_charset()
-        except AttributeError:  # Python 2 fallback
-            res_encoding = res_handle.headers.getparam("charset")
+    try:
+        res_encoding = res_handle.headers.get_content_charset()
+    except AttributeError:  # Python 2 fallback
+        res_encoding = res_handle.headers.getparam("charset")
 
-        res_data_raw = res_handle.read().decode(res_encoding)
+    res_data_raw = res_handle.read().decode(res_encoding)
 
-        try:
-            res_data = json.loads(res_data_raw)
-        except ValueError:
-            # The JSON failed to decode, this probably means that IPInfoDB
-            # returned an error. When it does so, it no longer returns JSON for
-            # some reason.
-            error = res_data_raw.split(";")[1]
-            if error:
-                raise LookupError(error)
-            else:
-                raise
+    try:
+        res_data = json.loads(res_data_raw)
+    except ValueError:
+        # The JSON failed to decode, this probably means that IPInfoDB
+        # returned an error. When it does so, it no longer returns JSON for
+        # some reason.
+        error = res_data_raw.split(";")[1]
+        if error:
+            raise LookupError(error)
+        else:
+            raise
 
-        coords = (
-            res_data["latitude"],
-            res_data["longitude"],
-        )
+    coords = (
+        res_data["latitude"],
+        res_data["longitude"],
+    )
 
-        return coords
+    return coords
 
-    def timezone_from_location(self, coords):
-        """
-        Return the timezone for a set of coordinates using the GeoNames API.
 
-        :param coords: latitude and longitude
-        :returns: timezone, or None if none is available
-        """
+def timezone_from_location(coords):
+    """
+    Return the timezone for a set of coordinates using the GeoNames API.
 
-        url = "http://api.geonames.org/timezoneJSON?"
+    :param coords: latitude and longitude
+    :returns: timezone, or None if none is available
+    """
 
-        latitude, longitude = coords
-        url_params = {
-            "username": AUTH["geonames"]["username"],
-            "lat": latitude,
-            "lng": longitude,
-        }
+    url = "http://api.geonames.org/timezoneJSON?"
 
-        res_handle = urlopen(url + urlencode(url_params))
+    latitude, longitude = coords
+    url_params = {
+        "username": AUTH["geonames"]["username"],
+        "lat": latitude,
+        "lng": longitude,
+    }
 
-        try:
-            res_encoding = res_handle.headers.get_content_charset()
-        except AttributeError:  # Python 2 fallback
-            res_encoding = res_handle.headers.getparam("charset")
+    res_handle = urlopen(url + urlencode(url_params))
 
-        res_data = json.loads(res_handle.read().decode(res_encoding))
+    try:
+        res_encoding = res_handle.headers.get_content_charset()
+    except AttributeError:  # Python 2 fallback
+        res_encoding = res_handle.headers.getparam("charset")
 
-        timezone = res_data.get("timezoneId")
+    res_data = json.loads(res_handle.read().decode(res_encoding))
 
-        return timezone
+    timezone = res_data.get("timezoneId")
+
+    return timezone
 
 
 if __name__ == "__main__":
-    t = TimeZoneUpdate()
-
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-p", "--print-only",
@@ -125,12 +123,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        coords = t.location_from_ip(ip=args.ip)
+        coords = location_from_ip(ip=args.ip)
     except LookupError as e:
         print("IPInfoDB returned an error: " + str(e), file=sys.stderr)
         sys.exit(3)
 
-    timezone = t.timezone_from_location(coords)
+    timezone = timezone_from_location(coords)
 
     if timezone is None:
         print("No timezone available for this IP.", file=sys.stderr)
