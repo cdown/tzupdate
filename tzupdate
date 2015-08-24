@@ -1,151 +1,101 @@
 #!/usr/bin/env python
 
-"""
+'''
 Set the system timezone based on IP geolocation.
-"""
+'''
 
 from __future__ import print_function
+
 import argparse
-import errno
-import json
 import os
 import sys
-
-try:
-    from urllib.request import urlopen
-    from urllib.parse import urlencode
-except ImportError:  # Python 2 fallback
-    from urllib import urlopen, urlencode
-
-AUTH = {
-    "ipinfodb": {
-        "api_key": "c253fddcfa96b60155aa66fb51b20cba"
-                   "dbcfa2020b2d27a89d4554ac2799b935",
-    },
-    "geonames": {
-        "username": "tzupdate",
-    },
-}
-PATH = {
-    "zoneinfo": "/usr/share/zoneinfo",
-    "localtime": "/etc/localtime",
-}
+import requests
+from geolite2 import geolite2
 
 
-def location_from_ip(ip=None):
-    """
-    Return location data for an IP using the IPInfoDB API.
-
-    :param ip: an IP address to use to override automatically detecting it
-    :returns: latitude and longitude
-    """
-
-    url = "http://api.ipinfodb.com/v3/ip-city/?"
-    url_params = {
-        "key": AUTH["ipinfodb"]["api_key"],
-        "format": "json",
-    }
-
-    if ip is not None:
-        url_params["ip"] = ip
-
-    res_handle = urlopen(url + urlencode(url_params))
-
-    try:
-        res_encoding = res_handle.headers.get_content_charset()
-    except AttributeError:  # Python 2 fallback
-        res_encoding = res_handle.headers.getparam("charset")
-
-    res_data_raw = res_handle.read().decode(res_encoding)
-
-    try:
-        res_data = json.loads(res_data_raw)
-    except ValueError:
-        # The JSON failed to decode, this probably means that IPInfoDB
-        # returned an error. When it does so, it no longer returns JSON for
-        # some reason.
-        error = res_data_raw.split(";")[1]
-        if error:
-            raise LookupError(error)
-        else:
-            raise
-
-    coords = (
-        res_data["latitude"],
-        res_data["longitude"],
-    )
-
-    return coords
+class TimezoneUpdateException(Exception): pass
+class TimezoneNotLocallyAvailableError(TimezoneUpdateException): pass
+class NoTimezoneAvailableError(TimezoneUpdateException): pass
 
 
-def timezone_from_location(coords):
-    """
-    Return the timezone for a set of coordinates using the GeoNames API.
+def get_public_ip():
+    ipify_handle = requests.get('https://api.ipify.org')
+    return ipify_handle.text
 
-    :param coords: latitude and longitude
-    :returns: timezone, or None if none is available
-    """
 
-    url = "http://api.geonames.org/timezoneJSON?"
+def get_timezone_for_ip(ip):
+    geoip = geolite2.reader()
+    ip_info = geoip.get(ip)
+    timezone = ip_info['location'].get('time_zone')
 
-    latitude, longitude = coords
-    url_params = {
-        "username": AUTH["geonames"]["username"],
-        "lat": latitude,
-        "lng": longitude,
-    }
-
-    res_handle = urlopen(url + urlencode(url_params))
-
-    try:
-        res_encoding = res_handle.headers.get_content_charset()
-    except AttributeError:  # Python 2 fallback
-        res_encoding = res_handle.headers.getparam("charset")
-
-    res_data = json.loads(res_handle.read().decode(res_encoding))
-
-    timezone = res_data.get("timezoneId")
+    if timezone is None:
+        raise NoTimezoneAvailableError('No timezone found for this IP.')
 
     return timezone
 
 
-if __name__ == "__main__":
+def link_localtime(timezone, zoneinfo_path, localtime_path):
+    zoneinfo_tz_path = os.path.join(zoneinfo_path, timezone)
+
+    if not os.path.isfile(zoneinfo_tz_path):
+        raise TimezoneNotLocallyAvailableError(
+            'Geolocation succeeded, returning timezone "%s", but this '
+            'timezone is not available on your operating system.' % timezone
+        )
+
+    os.unlink(localtime_path)
+    os.symlink(zoneinfo_tz_path, localtime_path)
+
+    return zoneinfo_tz_path
+
+
+def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "-p", "--print-only",
-        action="store_true",
-        help="print the timezone, but don't update " + PATH["localtime"]
+        '-p', '--print-only',
+        action='store_true',
+        help="print the timezone, but don't update the localtime file"
     )
     parser.add_argument(
-        "-a", "--ip",
-        help="use this IP instead of automatically detecting it"
+        '-a', '--ip',
+        help='use this IP instead of automatically detecting it'
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-z", "--zoneinfo-path",
+        default='/usr/share/zoneinfo',
+        help="path to root of the zoneinfo database (default: %(default)s)"
+    )
+    parser.add_argument(
+        '-l', '--localtime-path',
+        default='/etc/localtime',
+        help='path to localtime symlink (default: %(default)s)'
+    )
+    args = parser.parse_args(argv)
 
-    try:
-        coords = location_from_ip(ip=args.ip)
-    except LookupError as e:
-        print("IPInfoDB returned an error: " + str(e), file=sys.stderr)
-        sys.exit(3)
+    # We do this here instead of in "default" to avoid running it when we
+    # already have an IP address manually specified.
+    if args.ip is None:
+        args.ip = get_public_ip()
 
-    timezone = timezone_from_location(coords)
+    return args
 
-    if timezone is None:
-        print("No timezone available for this IP.", file=sys.stderr)
-        sys.exit(2)
+
+def main(argv=sys.argv[1:]):
+    args = parse_args(argv)
+
+    timezone = get_timezone_for_ip(args.ip)
+    print('Detected timezone is %s.' % timezone)
 
     if not args.print_only:
-        timezone_path = os.path.join(PATH["zoneinfo"], timezone)
-        if not os.path.isfile(timezone_path):
-            print("Unknown timezone: " + timezone_path, file=sys.stderr)
-            sys.exit(1)
+        zoneinfo_tz_path = link_localtime(
+            timezone, args.zoneinfo_path, args.localtime_path,
+        )
+        print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
 
-        try:
-            os.unlink(PATH["localtime"])
-        except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise
 
-        os.symlink(timezone_path, PATH["localtime"])
-
-    print(timezone)
+if __name__ == '__main__':
+    try:
+        main()
+    except TimezoneUpdateException as thrown_exc:
+        print(str(thrown_exc), file=sys.stderr)
+        sys.exit(1)
