@@ -14,8 +14,8 @@ from geolite2 import geolite2
 
 
 class TimezoneUpdateException(Exception): pass
-class TimezoneNotLocallyAvailableError(TimezoneUpdateException): pass
-class NoTimezoneAvailableError(TimezoneUpdateException): pass
+class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
+class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
 
 
 def get_public_ip():
@@ -98,4 +98,4 @@ if __name__ == '__main__':
         main()
     except TimezoneUpdateException as thrown_exc:
         print(str(thrown_exc), file=sys.stderr)
-        sys.exit(1)
+        sys.exit(thrown_exc.exit_code)
