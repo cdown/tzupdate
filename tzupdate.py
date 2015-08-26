@@ -16,6 +16,7 @@ from geolite2 import geolite2
 class TimezoneUpdateException(Exception): pass
 class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
 class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
+class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
 
 
 def get_public_ip():
@@ -34,8 +35,19 @@ def get_timezone_for_ip(ip):
     return timezone
 
 
+def check_directory_traversal(base_dir, requested_path):
+    requested_path_abs = os.path.abspath(requested_path)
+    if os.path.commonprefix([base_dir, requested_path_abs]) != base_dir:
+        raise DirectoryTraversalError(
+            '%r (%r) is outside base directory %r, refusing to run' % (
+                requested_path, requested_path_abs, base_dir,
+            )
+        )
+
+
 def link_localtime(timezone, zoneinfo_path, localtime_path):
     zoneinfo_tz_path = os.path.join(zoneinfo_path, timezone)
+    check_directory_traversal(zoneinfo_path, zoneinfo_tz_path)
 
     if not os.path.isfile(zoneinfo_tz_path):
         raise TimezoneNotLocallyAvailableError(
