@@ -92,7 +92,7 @@ def parse_args(argv):
     return args
 
 
-def main(argv=sys.argv[1:]):
+def run(argv):
     args = parse_args(argv)
 
     timezone = get_timezone_for_ip(args.ip)
@@ -105,9 +105,13 @@ def main(argv=sys.argv[1:]):
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
 
 
-if __name__ == '__main__':
+def main(argv=sys.argv[1:]):
     try:
-        main()
+        run(argv)
     except TimezoneUpdateException as thrown_exc:
         print(str(thrown_exc), file=sys.stderr)
         sys.exit(thrown_exc.exit_code)
+
+
+if __name__ == '__main__':
+    main()
