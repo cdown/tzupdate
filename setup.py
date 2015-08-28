@@ -9,5 +9,10 @@ setup(
     author = "Chris Down",
     author_email = "chris@chrisdown.name",
     url = "https://github.com/cdown/tzupdate",
+    install_requires=[
+        'requests',
+        'python-geoip',
+        'python-geoip-geolite2'
+    ],
     scripts = [ "tzupdate" ],
 )
