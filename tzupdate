@@ -10,7 +10,7 @@ import argparse
 import os
 import sys
 import requests
-from geolite2 import geolite2
+from geoip import geolite2
 
 
 class TimezoneUpdateException(Exception): pass
@@ -24,9 +24,8 @@ def get_public_ip():
 
 
 def get_timezone_for_ip(ip):
-    geoip = geolite2.reader()
-    ip_info = geoip.get(ip)
-    timezone = ip_info['location'].get('time_zone')
+    ip_info = geolite2.lookup(ip)
+    timezone = ip_info.timezone
 
     if timezone is None:
         raise NoTimezoneAvailableError('No timezone found for this IP.')
