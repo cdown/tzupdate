@@ -67,3 +67,15 @@ def test_link_localtime(isfile_mock, symlink_mock, unlink_mock):
     )
 
     eq(zoneinfo_tz_path, expected)
+
+
+@parameterized([
+    '/foo/bar',
+    '../../../../foo/bar',
+])
+def test_link_localtime_traversal_attack(questionable_timezone):
+    with assert_raises(tzupdate.DirectoryTraversalError):
+        tzupdate.link_localtime(
+            questionable_timezone,
+            tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
