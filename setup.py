@@ -14,7 +14,7 @@ with open('tests/requirements.txt') as test_requirements_f:
 
 setup(
     name='tzupdate',
-    version='0.3.0',
+    version='0.4.0',
     description='Set the system timezone based on IP geolocation',
     long_description=README,
     url='https://github.com/cdown/tzupdate',
