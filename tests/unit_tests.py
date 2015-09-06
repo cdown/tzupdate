@@ -79,3 +79,13 @@ def test_link_localtime_traversal_attack(questionable_timezone):
             questionable_timezone,
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
         )
+
+
+@mock.patch('tzupdate.os.path.isfile')
+def test_link_localtime_timezone_not_available(isfile_mock):
+    isfile_mock.return_value = False
+    with assert_raises(tzupdate.TimezoneNotLocallyAvailableError):
+        tzupdate.link_localtime(
+            FAKE_TIMEZONE,
+            tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
