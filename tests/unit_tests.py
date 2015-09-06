@@ -5,6 +5,7 @@ import httpretty
 import json
 import re
 from nose.tools import assert_raises, eq_ as eq, assert_true, with_setup
+from nose_parameterized import parameterized
 from hypothesis import given, assume
 from hypothesis.strategies import integers, tuples
 
@@ -37,3 +38,15 @@ def test_get_timezone_for_ip_explicit(ip_octets):
     ip = '.'.join(map(str, ip_octets))
     got_timezone = tzupdate.get_timezone_for_ip(ip)
     eq(got_timezone, FAKE_TIMEZONE)
+
+
+@httpretty.activate
+@parameterized([
+    ({'status': 'success'}, tzupdate.NoTimezoneAvailableError),
+    ({'status': 'fail'}, tzupdate.IPAPIError),
+    ({'status': 'fail', 'message': 'lolno'}, tzupdate.IPAPIError),
+])
+def test_get_timezone_for_ip_api_error_types(error_body, expected_exception):
+    setup_basic_api_response(body=error_body)
+    with assert_raises(expected_exception):
+        tzupdate.get_timezone_for_ip()
