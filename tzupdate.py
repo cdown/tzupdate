@@ -129,7 +129,7 @@ def main(argv=sys.argv[1:]):
     try:
         run(argv)
     except TimezoneUpdateException as thrown_exc:
-        print(str(thrown_exc), file=sys.stderr)
+        print('fatal: {0!s}'.format(thrown_exc), file=sys.stderr)
         sys.exit(thrown_exc.exit_code)
 
 
