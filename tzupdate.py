@@ -20,6 +20,11 @@ class IPAPIError(TimezoneUpdateException): exit_code = 4
 
 
 def get_timezone_for_ip(ip):
+    '''
+    Return the timezone for the specified IP, or if no IP is specified, use the
+    current public IP address.
+    '''
+
     api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip or '')
     api_response = requests.get(api_url).json()
     try:
@@ -34,6 +39,17 @@ def get_timezone_for_ip(ip):
 
 
 def check_directory_traversal(base_dir, requested_path):
+    '''
+    Check for directory traversal, and raise an exception if it was detected.
+
+    Since we are linking based upon the output of some data we retrieved over
+    the internet, we should check that it doesn't attempt to do something
+    naughty with local path traversal.
+
+    This function checks that the base directory of the zoneinfo database
+    shares a common prefix with the absolute path of the requested zoneinfo
+    file.
+    '''
     requested_path_abs = os.path.abspath(requested_path)
     if os.path.commonprefix([base_dir, requested_path_abs]) != base_dir:
         raise DirectoryTraversalError(
@@ -44,6 +60,14 @@ def check_directory_traversal(base_dir, requested_path):
 
 
 def link_localtime(timezone, zoneinfo_path, localtime_path):
+    '''
+    Link a timezone file from the zoneinfo database to /etc/localtime.
+
+    Since we may be retrieving the timezone file's relative path from an
+    untrusted source, we also do checks to make sure that no directory
+    traversal is going on. See `check_directory_traversal` for information
+    about how that works.
+    '''
     zoneinfo_tz_path = os.path.join(zoneinfo_path, timezone)
     check_directory_traversal(zoneinfo_path, zoneinfo_tz_path)
 
