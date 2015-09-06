@@ -10,29 +10,27 @@ import argparse
 import os
 import sys
 import requests
-from geolite2 import geolite2
 
 
 class TimezoneUpdateException(Exception): pass
 class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
 class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
 class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
-
-
-def get_public_ip():
-    ipify_handle = requests.get('https://api.ipify.org')
-    return ipify_handle.text
+class IPAPIError(TimezoneUpdateException): exit_code = 4
 
 
 def get_timezone_for_ip(ip):
-    geoip = geolite2.reader()
-    ip_info = geoip.get(ip)
-    timezone = ip_info['location'].get('time_zone')
-
-    if timezone is None:
-        raise NoTimezoneAvailableError('No timezone found for this IP.')
-
-    return timezone
+    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip or '')
+    api_response = requests.get(api_url).json()
+    try:
+        return api_response['timezone']
+    except KeyError:
+        if api_response.get('status') == 'success':
+            raise NoTimezoneAvailableError('No timezone found for this IP.')
+        else:
+            raise IPAPIError(
+                api_response.get('message', 'Unspecified API error.'),
+            )
 
 
 def check_directory_traversal(base_dir, requested_path):
@@ -83,12 +81,6 @@ def parse_args(argv):
         help='path to localtime symlink (default: %(default)s)'
     )
     args = parser.parse_args(argv)
-
-    # We do this here instead of in "default" to avoid running it when we
-    # already have an IP address manually specified.
-    if args.ip is None:
-        args.ip = get_public_ip()
-
     return args
 
 

@@ -1,2 +1,1 @@
-maxminddb-geolite2
 requests
