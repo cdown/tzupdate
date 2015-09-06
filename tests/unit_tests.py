@@ -66,6 +66,11 @@ def test_link_localtime(isfile_mock, symlink_mock, unlink_mock):
         tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
     )
 
+    assert_true(unlink_mock.called_once_with([expected]))
+    assert_true(symlink_mock.called_once_with([
+        expected, tzupdate.DEFAULT_LOCALTIME_PATH
+    ]))
+
     eq(zoneinfo_tz_path, expected)
 
 
