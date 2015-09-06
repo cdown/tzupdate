@@ -3,5 +3,7 @@ include MANIFEST.in
 include README.rst
 include requirements.txt
 
+recursive-include * requirements.txt
+
 recursive-exclude * *.py[co]
 recursive-exclude * __pycache__
