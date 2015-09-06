@@ -19,7 +19,7 @@ class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
 class IPAPIError(TimezoneUpdateException): exit_code = 4
 
 
-def get_timezone_for_ip(ip):
+def get_timezone_for_ip(ip=None):
     '''
     Return the timezone for the specified IP, or if no IP is specified, use the
     current public IP address.
