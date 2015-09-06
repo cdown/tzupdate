@@ -12,6 +12,10 @@ import sys
 import requests
 
 
+DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
+DEFAULT_LOCALTIME_PATH = '/etc/localtime'
+
+
 class TimezoneUpdateException(Exception): pass
 class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
 class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
@@ -96,12 +100,12 @@ def parse_args(argv):
     )
     parser.add_argument(
         "-z", "--zoneinfo-path",
-        default='/usr/share/zoneinfo',
+        default=DEFAULT_ZONEINFO_PATH,
         help="path to root of the zoneinfo database (default: %(default)s)"
     )
     parser.add_argument(
         '-l', '--localtime-path',
-        default='/etc/localtime',
+        default=DEFAULT_LOCALTIME_PATH,
         help='path to localtime symlink (default: %(default)s)'
     )
     args = parser.parse_args(argv)

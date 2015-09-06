@@ -2,8 +2,10 @@
 
 import tzupdate
 import httpretty
+import os
 import json
 import re
+import mock
 from nose.tools import assert_raises, eq_ as eq, assert_true, with_setup
 from nose_parameterized import parameterized
 from hypothesis import given, assume
@@ -50,3 +52,18 @@ def test_get_timezone_for_ip_api_error_types(error_body, expected_exception):
     setup_basic_api_response(body=error_body)
     with assert_raises(expected_exception):
         tzupdate.get_timezone_for_ip()
+
+
+@mock.patch('tzupdate.os.unlink')
+@mock.patch('tzupdate.os.symlink')
+@mock.patch('tzupdate.os.path.isfile')
+def test_link_localtime(isfile_mock, symlink_mock, unlink_mock):
+    isfile_mock.return_value = True
+    expected = os.path.join(tzupdate.DEFAULT_ZONEINFO_PATH, FAKE_TIMEZONE)
+
+    zoneinfo_tz_path = tzupdate.link_localtime(
+        FAKE_TIMEZONE,
+        tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+    )
+
+    eq(zoneinfo_tz_path, expected)
