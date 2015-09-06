@@ -1,14 +1,12 @@
-tzupdate is a fully automated utility to set the system time. It uses your IP
-to geolocate you, and then links the appropriate timezone file for your
-location.
+tzupdate is a fully automated utility to set the system time using geolocation.
 
 Usage
 =====
 
 By default, tzupdate will geolocate you, get the timezone for that geolocation,
-and then attempt to link that timezone to ``/etc/localtime``. You can pass `-p`
-to print the detected timezone without linking. You can also pass `-a` to pass
-an IP address to use, instead of geolocating you.
+and then attempt to link that timezone to ``/etc/localtime``. You can pass
+``-p`` to print the detected timezone without linking. You can also pass ``-a``
+to pass an IP address to use, instead of geolocating you.
 
 ::
 
