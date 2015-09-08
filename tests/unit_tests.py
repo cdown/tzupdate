@@ -6,9 +6,9 @@ import os
 import json
 import re
 import mock
-from nose.tools import assert_raises, eq_ as eq, assert_true, with_setup
+from nose.tools import assert_raises, eq_ as eq, assert_true
 from nose_parameterized import parameterized
-from hypothesis import given, assume
+from hypothesis import given
 from hypothesis.strategies import integers, tuples
 
 
@@ -37,8 +37,8 @@ def test_get_timezone_for_ip_none():
 @given(IP_ADDRESSES)
 def test_get_timezone_for_ip_explicit(ip_octets):
     setup_basic_api_response()
-    ip = '.'.join(map(str, ip_octets))
-    got_timezone = tzupdate.get_timezone_for_ip(ip)
+    ip_addr = '.'.join(map(str, ip_octets))
+    got_timezone = tzupdate.get_timezone_for_ip(ip_addr)
     eq(got_timezone, FAKE_TIMEZONE)
 
 

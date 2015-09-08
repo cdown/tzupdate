@@ -16,20 +16,20 @@ DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
 
 
-class TimezoneUpdateException(Exception): pass
+class TimezoneUpdateException(Exception): exit_code = None
 class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
 class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
 class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
 class IPAPIError(TimezoneUpdateException): exit_code = 4
 
 
-def get_timezone_for_ip(ip=None):
+def get_timezone_for_ip(ip_addr=None):
     '''
     Return the timezone for the specified IP, or if no IP is specified, use the
     current public IP address.
     '''
 
-    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip or '')
+    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip_addr or '')
     api_response = requests.get(api_url).json()
     try:
         return api_response['timezone']
