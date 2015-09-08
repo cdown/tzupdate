@@ -10,6 +10,7 @@ import argparse
 import os
 import sys
 import requests
+import errno
 
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
@@ -21,6 +22,7 @@ class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
 class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
 class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
 class IPAPIError(TimezoneUpdateException): exit_code = 4
+class LocaltimePermissionError(TimezoneUpdateException): exit_code = 5
 
 
 def get_timezone_for_ip(ip_addr=None):
@@ -81,7 +83,20 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
             'timezone is not available on your operating system.' % timezone
         )
 
-    os.unlink(localtime_path)
+    try:
+        os.unlink(localtime_path)
+    except OSError as thrown_exc:
+        # If we don't have permission to unlink /etc/localtime, we probably
+        # need to be root.
+        if thrown_exc.errno == errno.EACCES:
+            raise LocaltimePermissionError(
+                'Could not link "%s" (%s). Are you root?' % (
+                    localtime_path, thrown_exc,
+                )
+            )
+        else:
+            raise
+
     os.symlink(zoneinfo_tz_path, localtime_path)
 
     return zoneinfo_tz_path

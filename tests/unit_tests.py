@@ -3,6 +3,7 @@
 import tzupdate
 import httpretty
 import os
+import errno
 import json
 import re
 import mock
@@ -90,6 +91,18 @@ def test_link_localtime_traversal_attack(questionable_timezone):
 def test_link_localtime_timezone_not_available(isfile_mock):
     isfile_mock.return_value = False
     with assert_raises(tzupdate.TimezoneNotLocallyAvailableError):
+        tzupdate.link_localtime(
+            FAKE_TIMEZONE,
+            tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
+
+
+@mock.patch('tzupdate.os.unlink')
+@mock.patch('tzupdate.os.path.isfile')
+def test_link_localtime_permission_denied(isfile_mock, unlink_mock):
+    isfile_mock.return_value = True
+    unlink_mock.side_effect = OSError(errno.EACCES, 'Permission denied yo')
+    with assert_raises(tzupdate.LocaltimePermissionError):
         tzupdate.link_localtime(
             FAKE_TIMEZONE,
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
