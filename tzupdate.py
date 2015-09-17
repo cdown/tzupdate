@@ -11,7 +11,9 @@ import os
 import sys
 import requests
 import errno
+import logging
 
+log = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
@@ -32,7 +34,9 @@ def get_timezone_for_ip(ip_addr=None):
     '''
 
     api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip_addr or '')
+    log.debug('Making request to %s', api_url)
     api_response = requests.get(api_url).json()
+    log.debug('API response: %r', api_response)
     try:
         return api_response['timezone']
     except KeyError:
@@ -56,7 +60,9 @@ def check_directory_traversal(base_dir, requested_path):
     shares a common prefix with the absolute path of the requested zoneinfo
     file.
     '''
+    log.debug('Checking for traversal in path %s', requested_path)
     requested_path_abs = os.path.abspath(requested_path)
+    log.debug('Absolute path of requested path is %s', requested_path_abs)
     if os.path.commonprefix([base_dir, requested_path_abs]) != base_dir:
         raise DirectoryTraversalError(
             '%r (%r) is outside base directory %r, refusing to run' % (
@@ -123,13 +129,17 @@ def parse_args(argv):
         default=DEFAULT_LOCALTIME_PATH,
         help='path to localtime symlink (default: %(default)s)'
     )
+    parser.add_argument(
+        '--debug',
+        action="store_const", dest='log_level',
+        const=logging.DEBUG, default=logging.WARNING,
+        help='enable debug logging',
+    )
     args = parser.parse_args(argv)
     return args
 
 
-def run(argv):
-    args = parse_args(argv)
-
+def run(args):
     timezone = get_timezone_for_ip(args.ip)
     print('Detected timezone is %s.' % timezone)
 
@@ -141,11 +151,18 @@ def run(argv):
 
 
 def main(argv=sys.argv[1:]):
+    args = parse_args(argv)
+    logging.basicConfig(level=args.log_level)
+
     try:
-        run(argv)
+        run(args)
     except TimezoneUpdateException as thrown_exc:
-        print('fatal: {0!s}'.format(thrown_exc), file=sys.stderr)
-        sys.exit(thrown_exc.exit_code)
+        if args.log_level == logging.DEBUG:
+            # Give the full traceback if we are in debug mode
+            raise
+        else:
+            print('fatal: {0!s}'.format(thrown_exc), file=sys.stderr)
+            sys.exit(thrown_exc.exit_code)
 
 
 if __name__ == '__main__':
