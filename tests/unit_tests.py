@@ -43,14 +43,14 @@ def test_get_timezone_for_ip_explicit(ip_octets):
     eq(got_timezone, FAKE_TIMEZONE)
 
 
-@httpretty.activate
 @parameterized([
     ({'status': 'success'}, tzupdate.NoTimezoneAvailableError),
     ({'status': 'fail'}, tzupdate.IPAPIError),
     ({'status': 'fail', 'message': 'lolno'}, tzupdate.IPAPIError),
 ])
+@httpretty.activate
 def test_get_timezone_for_ip_api_error_types(error_body, expected_exception):
-    setup_basic_api_response(body=error_body)
+    setup_basic_api_response(body=json.dumps(error_body))
     with assert_raises(expected_exception):
         tzupdate.get_timezone_for_ip()
 
