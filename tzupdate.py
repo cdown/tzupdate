@@ -150,7 +150,10 @@ def run(args):
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
 
 
-def main(argv=sys.argv[1:]):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
     args = parse_args(argv)
     logging.basicConfig(level=args.log_level)
 
