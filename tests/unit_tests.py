@@ -107,3 +107,18 @@ def test_link_localtime_permission_denied(isfile_mock, unlink_mock):
             FAKE_TIMEZONE,
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
         )
+
+@mock.patch('tzupdate.os.unlink')
+@mock.patch('tzupdate.os.path.isfile')
+def test_link_localtime_oserror_not_permission(isfile_mock, unlink_mock):
+    isfile_mock.return_value = True
+    code = errno.ENOSPC
+    unlink_mock.side_effect = OSError(code, 'No space yo')
+
+    with assert_raises(OSError) as thrown_exc:
+        tzupdate.link_localtime(
+            FAKE_TIMEZONE,
+            tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
+
+    eq(thrown_exc.exception.errno, code)
