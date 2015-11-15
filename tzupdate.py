@@ -143,7 +143,13 @@ def parse_args(argv):
     return args
 
 
-def run(args):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
+    args = parse_args(argv)
+    logging.basicConfig(level=args.log_level)
+
     if args.timezone:
         timezone = args.timezone
         print('Using explicitly passed timezone: %s' % timezone)
@@ -156,24 +162,6 @@ def run(args):
             timezone, args.zoneinfo_path, args.localtime_path,
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
-
-
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
-
-    args = parse_args(argv)
-    logging.basicConfig(level=args.log_level)
-
-    try:
-        run(args)
-    except TimezoneUpdateException as thrown_exc:
-        if args.log_level == logging.DEBUG:
-            # Give the full traceback if we are in debug mode
-            raise
-        else:
-            print('fatal: {0!s}'.format(thrown_exc), file=sys.stderr)
-            sys.exit(thrown_exc.exit_code)
 
 
 if __name__ == '__main__':
