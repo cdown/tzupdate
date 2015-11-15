@@ -120,6 +120,10 @@ def parse_args(argv):
         help='use this IP instead of automatically detecting it'
     )
     parser.add_argument(
+        '-t', '--timezone',
+        help='use this timezone instead of automatically detecting it'
+    )
+    parser.add_argument(
         "-z", "--zoneinfo-path",
         default=DEFAULT_ZONEINFO_PATH,
         help="path to root of the zoneinfo database (default: %(default)s)"
@@ -140,8 +144,12 @@ def parse_args(argv):
 
 
 def run(args):
-    timezone = get_timezone_for_ip(args.ip)
-    print('Detected timezone is %s.' % timezone)
+    if args.timezone:
+        timezone = args.timezone
+        print('Using explicitly passed timezone: %s' % timezone)
+    else:
+        timezone = get_timezone_for_ip(args.ip)
+        print('Detected timezone is %s.' % timezone)
 
     if not args.print_only:
         zoneinfo_tz_path = link_localtime(

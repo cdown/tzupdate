@@ -49,3 +49,15 @@ def test_explicit_ip(_, get_timezone_for_ip_mock):
     args = tzupdate.parse_args(['-a', ip_addr])
     tzupdate.run(args)
     assert_true(get_timezone_for_ip_mock.called_once_with(ip_addr))
+
+@mock.patch('tzupdate.link_localtime')
+def test_explicit_timezone(link_localtime_mock):
+    timezone = 'Foo/Bar'
+    args = tzupdate.parse_args(['-t', timezone])
+    tzupdate.run(args)
+    assert_true(
+        link_localtime_mock.called_once_with(
+            timezone,
+            tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
+    )
