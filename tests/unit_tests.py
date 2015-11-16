@@ -44,9 +44,8 @@ def test_get_timezone_for_ip_explicit(ip_octets):
 
 
 @parameterized([
-    ({'status': 'success'}, tzupdate.NoTimezoneAvailableError),
-    ({'status': 'fail'}, tzupdate.IPAPIError),
-    ({'status': 'fail', 'message': 'lolno'}, tzupdate.IPAPIError),
+    ({'timezone': ''}, tzupdate.NoTimezoneAvailableError),
+    ({'message': 'lolno'}, tzupdate.IPAPIError),
 ])
 @httpretty.activate
 def test_get_timezone_for_ip_api_error_types(error_body, expected_exception):
