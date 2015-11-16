@@ -33,7 +33,7 @@ def get_timezone_for_ip(ip_addr=None):
     current public IP address.
     '''
 
-    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip_addr or '')
+    api_url = 'http://ip-api.com/json/{ip}?fields=49408'.format(ip=ip_addr or '')
     log.debug('Making request to %s', api_url)
     api_response = requests.get(api_url).json()
     log.debug('API response: %r', api_response)
