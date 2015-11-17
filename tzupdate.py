@@ -33,16 +33,16 @@ def get_timezone_for_ip(ip_addr=None):
     current public IP address.
     '''
 
-    api_url = 'http://ip-api.com/json/{ip}?fields=timezone,message'.format(ip=ip_addr or '')
+    api_url = 'http://ip-api.com/json/{ip}?fields=timezone,status,message'.format(ip=ip_addr or '')
     log.debug('Making request to %s', api_url)
     api_response = requests.get(api_url).json()
     log.debug('API response: %r', api_response)
-    try:
+    if api_response.get('status') == 'success':
         if not api_response['timezone']:
             raise NoTimezoneAvailableError('No timezone found for this IP.')
         return api_response['timezone']
-    except KeyError:
-        raise IPAPIError(
+    else:
+        raise IPAPIError("API error: " +
             api_response.get('message', 'Unspecified API error.'),
         )
 
