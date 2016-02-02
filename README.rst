@@ -1,3 +1,13 @@
+|travis| |coveralls|
+
+.. |travis| image:: https://travis-ci.org/cdown/tzupdate.svg?branch=develop
+  :target: https://travis-ci.org/cdown/tzupdate
+  :alt: Test status
+
+.. |coveralls| image:: https://coveralls.io/repos/cdown/tzupdate/badge.svg?branch=develop&service=github
+  :target: https://coveralls.io/github/cdown/tzupdate?branch=develop
+  :alt: Coverage
+
 tzupdate is a fully automated utility to set the system time using geolocation.
 
 Usage
@@ -32,20 +42,6 @@ To install the latest development version directly from GitHub:
 
 Testing
 -------
-
-|travis| |coveralls| |scrutinizer|
-
-.. |travis| image:: https://travis-ci.org/cdown/tzupdate.svg?branch=develop
-  :target: https://travis-ci.org/cdown/tzupdate
-  :alt: Test status
-
-.. |coveralls| image:: https://coveralls.io/repos/cdown/tzupdate/badge.svg?branch=develop&service=github
-  :target: https://coveralls.io/github/cdown/tzupdate?branch=develop
-  :alt: Coverage
-
-.. |scrutinizer| image:: https://img.shields.io/scrutinizer/g/cdown/tzupdate/develop.svg
-  :target: https://scrutinizer-ci.com/g/cdown/tzupdate/?branch=develop
-  :alt: Code quality
 
 .. code::
 
