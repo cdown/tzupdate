@@ -13,12 +13,11 @@ import requests
 import errno
 import logging
 
+
 log = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
-
-
 
 
 def get_timezone_for_ip(ip_addr=None):
