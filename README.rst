@@ -1,7 +1,17 @@
+|travis| |coveralls|
+
+.. |travis| image:: https://travis-ci.org/cdown/tzupdate.svg?branch=develop
+  :target: https://travis-ci.org/cdown/tzupdate
+  :alt: Test status
+
+.. |coveralls| image:: https://coveralls.io/repos/cdown/tzupdate/badge.svg?branch=develop&service=github
+  :target: https://coveralls.io/github/cdown/tzupdate?branch=develop
+  :alt: Coverage
+
 tzupdate is a fully automated utility to set the system time using geolocation.
 
 Usage
-=====
+-----
 
 By default, tzupdate will geolocate you, get the timezone for that geolocation,
 and then attempt to link that timezone to ``/etc/localtime``. You can pass
@@ -16,44 +26,25 @@ to pass an IP address to use, instead of geolocating you.
 
 
 Installation
-============
+------------
 
-Installation requires `setuptools`_.
+To install the latest stable version from PyPi:
 
-.. _setuptools: https://pypi.python.org/pypi/setuptools
+.. code::
 
-Stable version
---------------
+    pip install -U tzupdate
 
-::
+To install the latest development version directly from GitHub:
 
-    $ pip install tzupdate
+.. code::
 
-Development version
--------------------
-
-::
-
-    $ git clone git://github.com/cdown/tzupdate.git
-    $ cd tzupdate
-    $ python setup.py install
+    pip install -U git+https://github.com/cdown/tzupdate.git@develop
 
 Testing
-=======
+-------
 
-.. image:: https://travis-ci.org/cdown/tzupdate.svg?branch=develop
-  :target: https://travis-ci.org/cdown/tzupdate
-  :alt: Test status
+.. code::
 
-::
+   tox -e quick
 
-    $ python setup.py test
-
-License
-=======
-
-tzupdate is licensed under an `ISC license`_. Full information is in the
-`LICENSE`_ file.
-
-.. _ISC license: https://en.wikipedia.org/wiki/ISC_license
-.. _LICENSE: LICENSE
+.. _Tox: https://tox.readthedocs.org

@@ -10,27 +10,26 @@ import argparse
 import os
 import sys
 import requests
+import errno
+import logging
 
+
+log = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
 
 
-class TimezoneUpdateException(Exception): pass
-class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
-class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
-class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
-class IPAPIError(TimezoneUpdateException): exit_code = 4
-
-
-def get_timezone_for_ip(ip=None):
+def get_timezone_for_ip(ip_addr=None):
     '''
     Return the timezone for the specified IP, or if no IP is specified, use the
     current public IP address.
     '''
 
-    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip or '')
+    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip_addr or '')
+    log.debug('Making request to %s', api_url)
     api_response = requests.get(api_url).json()
+    log.debug('API response: %r', api_response)
     try:
         return api_response['timezone']
     except KeyError:
@@ -54,7 +53,9 @@ def check_directory_traversal(base_dir, requested_path):
     shares a common prefix with the absolute path of the requested zoneinfo
     file.
     '''
+    log.debug('Checking for traversal in path %s', requested_path)
     requested_path_abs = os.path.abspath(requested_path)
+    log.debug('Absolute path of requested path is %s', requested_path_abs)
     if os.path.commonprefix([base_dir, requested_path_abs]) != base_dir:
         raise DirectoryTraversalError(
             '%r (%r) is outside base directory %r, refusing to run' % (
@@ -81,7 +82,21 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
             'timezone is not available on your operating system.' % timezone
         )
 
-    os.unlink(localtime_path)
+    try:
+        os.unlink(localtime_path)
+    except OSError as thrown_exc:
+        # If we don't have permission to unlink /etc/localtime, we probably
+        # need to be root.
+        if thrown_exc.errno == errno.EACCES:
+            raise OSError(
+                thrown_exc.errno,
+                'Could not link "%s" (%s). Are you root?' % (
+                    localtime_path, thrown_exc,
+                ),
+            )
+        elif thrown_exc.errno != errno.ENOENT:
+            raise
+
     os.symlink(zoneinfo_tz_path, localtime_path)
 
     return zoneinfo_tz_path
@@ -99,6 +114,10 @@ def parse_args(argv):
         help='use this IP instead of automatically detecting it'
     )
     parser.add_argument(
+        '-t', '--timezone',
+        help='use this timezone instead of automatically detecting it'
+    )
+    parser.add_argument(
         "-z", "--zoneinfo-path",
         default=DEFAULT_ZONEINFO_PATH,
         help="path to root of the zoneinfo database (default: %(default)s)"
@@ -108,15 +127,29 @@ def parse_args(argv):
         default=DEFAULT_LOCALTIME_PATH,
         help='path to localtime symlink (default: %(default)s)'
     )
+    parser.add_argument(
+        '--debug',
+        action="store_const", dest='log_level',
+        const=logging.DEBUG, default=logging.WARNING,
+        help='enable debug logging',
+    )
     args = parser.parse_args(argv)
     return args
 
 
-def run(argv):
-    args = parse_args(argv)
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
 
-    timezone = get_timezone_for_ip(args.ip)
-    print('Detected timezone is %s.' % timezone)
+    args = parse_args(argv)
+    logging.basicConfig(level=args.log_level)
+
+    if args.timezone:
+        timezone = args.timezone
+        print('Using explicitly passed timezone: %s' % timezone)
+    else:
+        timezone = get_timezone_for_ip(args.ip)
+        print('Detected timezone is %s.' % timezone)
 
     if not args.print_only:
         zoneinfo_tz_path = link_localtime(
@@ -125,12 +158,35 @@ def run(argv):
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
 
 
-def main(argv=sys.argv[1:]):
-    try:
-        run(argv)
-    except TimezoneUpdateException as thrown_exc:
-        print('fatal: {0!s}'.format(thrown_exc), file=sys.stderr)
-        sys.exit(thrown_exc.exit_code)
+class TimezoneUpdateException(Exception):
+    '''
+    Base class for exceptions raised by tzupdate.
+    '''
+
+
+class TimezoneNotLocallyAvailableError(TimezoneUpdateException):
+    '''
+    Raised when the API returned a timezone, but we don't have it locally.
+    '''
+
+
+class NoTimezoneAvailableError(TimezoneUpdateException):
+    '''
+    Raised when the API did not return a timezone.
+    '''
+
+
+class DirectoryTraversalError(TimezoneUpdateException):
+    '''
+    Raised when the timezone path returned by the API would result in directory
+    traversal when concatenated with the zoneinfo path.
+    '''
+
+
+class IPAPIError(TimezoneUpdateException):
+    '''
+    Raised when IP-API raises an internal error.
+    '''
 
 
 if __name__ == '__main__':
