@@ -100,7 +100,7 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
                     localtime_path, thrown_exc,
                 )
             )
-        else:
+        elif thrown_exc.errno != errno.ENOENT:
             raise
 
     os.symlink(zoneinfo_tz_path, localtime_path)

@@ -108,6 +108,7 @@ def test_link_localtime_permission_denied(isfile_mock, unlink_mock):
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
         )
 
+
 @mock.patch('tzupdate.os.unlink')
 @mock.patch('tzupdate.os.path.isfile')
 def test_link_localtime_oserror_not_permission(isfile_mock, unlink_mock):
@@ -122,3 +123,19 @@ def test_link_localtime_oserror_not_permission(isfile_mock, unlink_mock):
         )
 
     eq(thrown_exc.exception.errno, code)
+
+
+@mock.patch('tzupdate.os.unlink')
+@mock.patch('tzupdate.os.path.isfile')
+@mock.patch('tzupdate.os.symlink')
+def test_link_localtime_localtime_missing_no_raise(symlink_mock, isfile_mock,
+                                                   unlink_mock):
+    isfile_mock.return_value = True
+    code = errno.ENOENT
+    unlink_mock.side_effect = OSError(code, 'No such file or directory')
+
+    # This should handle OSError and not raise further
+    tzupdate.link_localtime(
+        FAKE_TIMEZONE,
+        tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+    )
