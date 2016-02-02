@@ -169,10 +169,12 @@ class TimezoneNotLocallyAvailableError(TimezoneUpdateException):
     Raised when the API returned a timezone, but we don't have it locally.
     '''
 
+
 class NoTimezoneAvailableError(TimezoneUpdateException):
     '''
     Raised when the API did not return a timezone.
     '''
+
 
 class DirectoryTraversalError(TimezoneUpdateException):
     '''
@@ -180,10 +182,12 @@ class DirectoryTraversalError(TimezoneUpdateException):
     traversal when concatenated with the zoneinfo path.
     '''
 
+
 class IPAPIError(TimezoneUpdateException):
     '''
     Raised when IP-API raises an internal error.
     '''
+
 
 if __name__ == '__main__':
     main()
