@@ -19,12 +19,6 @@ DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
 
 
-class TimezoneUpdateException(Exception): exit_code = None
-class TimezoneNotLocallyAvailableError(TimezoneUpdateException): exit_code = 1
-class NoTimezoneAvailableError(TimezoneUpdateException): exit_code = 2
-class DirectoryTraversalError(TimezoneUpdateException): exit_code = 3
-class IPAPIError(TimezoneUpdateException): exit_code = 4
-class LocaltimePermissionError(TimezoneUpdateException): exit_code = 5
 
 
 def get_timezone_for_ip(ip_addr=None):
@@ -95,10 +89,11 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
         # If we don't have permission to unlink /etc/localtime, we probably
         # need to be root.
         if thrown_exc.errno == errno.EACCES:
-            raise LocaltimePermissionError(
+            raise OSError(
+                thrown_exc.errno,
                 'Could not link "%s" (%s). Are you root?' % (
                     localtime_path, thrown_exc,
-                )
+                ),
             )
         elif thrown_exc.errno != errno.ENOENT:
             raise
@@ -163,6 +158,33 @@ def main(argv=None):
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
 
+
+class TimezoneUpdateException(Exception):
+    '''
+    Base class for exceptions raised by tzupdate.
+    '''
+
+
+class TimezoneNotLocallyAvailableError(TimezoneUpdateException):
+    '''
+    Raised when the API returned a timezone, but we don't have it locally.
+    '''
+
+class NoTimezoneAvailableError(TimezoneUpdateException):
+    '''
+    Raised when the API did not return a timezone.
+    '''
+
+class DirectoryTraversalError(TimezoneUpdateException):
+    '''
+    Raised when the timezone path returned by the API would result in directory
+    traversal when concatenated with the zoneinfo path.
+    '''
+
+class IPAPIError(TimezoneUpdateException):
+    '''
+    Raised when IP-API raises an internal error.
+    '''
 
 if __name__ == '__main__':
     main()

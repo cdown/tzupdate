@@ -102,11 +102,13 @@ def test_link_localtime_timezone_not_available(isfile_mock):
 def test_link_localtime_permission_denied(isfile_mock, unlink_mock):
     isfile_mock.return_value = True
     unlink_mock.side_effect = OSError(errno.EACCES, 'Permission denied yo')
-    with assert_raises(tzupdate.LocaltimePermissionError):
+    with assert_raises(OSError) as raise_cm:
         tzupdate.link_localtime(
             FAKE_TIMEZONE,
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
         )
+
+    eq(raise_cm.exception.errno, errno.EACCES)
 
 
 @mock.patch('tzupdate.os.unlink')
