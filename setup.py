@@ -9,9 +9,6 @@ with open('README.rst') as readme_f:
 with open('requirements.txt') as requirements_f:
     REQUIREMENTS = requirements_f.readlines()
 
-with open('tests/requirements.txt') as test_requirements_f:
-    TEST_REQUIREMENTS = test_requirements_f.readlines()
-
 setup(
     name='tzupdate',
     version='0.5.0',
@@ -41,7 +38,4 @@ setup(
         "Topic :: System :: Networking :: Time Synchronization",
         "Topic :: Utilities",
     ],
-
-    test_suite='nose.collector',
-    tests_require=TEST_REQUIREMENTS,
 )
