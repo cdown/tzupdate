@@ -78,8 +78,8 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
 
     if not os.path.isfile(zoneinfo_tz_path):
         raise TimezoneNotLocallyAvailableError(
-            'Geolocation succeeded, returning timezone "%s", but this '
-            'timezone is not available on your operating system.' % timezone
+            'Timezone "%s" requested, but this timezone is not available on '
+            'your operating system.' % timezone
         )
 
     try:
