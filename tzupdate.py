@@ -149,7 +149,7 @@ def parse_args(argv):
     parser.add_argument(
         '-d', '--etc-timezone-path',
         default=DEFAULT_ETC_TIMEZONE_PATH,
-        help='path to /etc/timezone equivalent (default: %(default)s)"'
+        help='path to /etc/timezone equivalent (default: %(default)s)'
         )
     parser.add_argument(
         '--debug',
