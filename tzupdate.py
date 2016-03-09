@@ -183,7 +183,7 @@ def main(argv=None):
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
         written = export_timezone(timezone, args.etc_timezone_path)
         if written:
-            print('Wrote timezone %s to %s.' (timezone, args.etc_timezone_path))
+            print('Wrote timezone %s to %s.' % (timezone, args.etc_timezone_path))
 
 
 class TimezoneUpdateException(Exception):
