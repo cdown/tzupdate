@@ -113,12 +113,12 @@ def export_etc_timezone(timezone, etc_timezone_path):
     Return a boolean indicating whether the indicated file exists and was
     overwritten.
     '''
-    written = False
+    wrote_etc_timezone = False
     if os.path.exists(etc_timezone_path):
-        written = True
+        wrote_etc_timezone = True
         with open(etc_timezone_path, 'w') as fd:
             fd.write(timezone)
-    return written
+    return wrote_etc_timezone
 
 
 def parse_args(argv):
@@ -180,8 +180,8 @@ def main(argv=None):
             timezone, args.zoneinfo_path, args.localtime_path,
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
-        written = export_etc_timezone(timezone, args.etc_timezone_path)
-        if written:
+        wrote_etc_timezone = export_etc_timezone(timezone, args.etc_timezone_path)
+        if wrote_etc_timezone:
             print('Wrote timezone %s to %s.' % (timezone, args.etc_timezone_path))
 
 
