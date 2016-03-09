@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
-
+DEFAULT_ETC_TIMEZONE_PATH = '/etc/timezone'
 
 def get_timezone_for_ip(ip_addr=None):
     '''
@@ -102,6 +102,26 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
     return zoneinfo_tz_path
 
 
+def export_timezone(timezone, etc_timezone_path):
+    '''
+    Check whether the system uses a /etc/timezone file (or an equivalent
+    provided by the user).  If so, write the name of the timezone to that file.
+
+    This has been confirmed as necessary on Raspbian running Debian 8.0,
+    expected to be necessary on other systems as well.
+
+    Return a boolean indicating whether the indicated file exists and was
+    overwritten.
+    '''
+    written = False
+    if os.path.exists(etc_timezone_path):
+        written = True
+        with open(etc_timezone_path, 'wb') as fd:
+            # Overwrite, not append.
+            fd.write(timezone)
+    return written
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -127,6 +147,11 @@ def parse_args(argv):
         default=DEFAULT_LOCALTIME_PATH,
         help='path to localtime symlink (default: %(default)s)'
     )
+    parser.add_argument(
+        '-d', '--etc-timezone-path',
+        default=DEFAULT_ETC_TIMEZONE_PATH,
+        help='path to /etc/timezone equivalent (default: %(default)s)"'
+        )
     parser.add_argument(
         '--debug',
         action="store_const", dest='log_level',
@@ -156,6 +181,9 @@ def main(argv=None):
             timezone, args.zoneinfo_path, args.localtime_path,
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
+        written = export_timezone(timezone, args.etc_timezone_path)
+        if written:
+            print('Wrote timezone %s to %s.' (timezone, args.etc_timezone_path))
 
 
 class TimezoneUpdateException(Exception):
