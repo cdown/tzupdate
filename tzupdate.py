@@ -116,7 +116,7 @@ def export_etc_timezone(timezone, etc_timezone_path):
     written = False
     if os.path.exists(etc_timezone_path):
         written = True
-        with open(etc_timezone_path, 'wb') as fd:
+        with open(etc_timezone_path, 'w') as fd:
             # Overwrite, not append.
             fd.write(timezone)
     return written
