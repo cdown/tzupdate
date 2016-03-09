@@ -102,7 +102,7 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
     return zoneinfo_tz_path
 
 
-def export_timezone(timezone, etc_timezone_path):
+def export_etc_timezone(timezone, etc_timezone_path):
     '''
     Check whether the system uses a /etc/timezone file (or an equivalent
     provided by the user).  If so, write the name of the timezone to that file.
@@ -181,7 +181,7 @@ def main(argv=None):
             timezone, args.zoneinfo_path, args.localtime_path,
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
-        written = export_timezone(timezone, args.etc_timezone_path)
+        written = export_etc_timezone(timezone, args.etc_timezone_path)
         if written:
             print('Wrote timezone %s to %s.' % (timezone, args.etc_timezone_path))
 
