@@ -16,7 +16,7 @@ from hypothesis.strategies import integers, tuples
 IP_OCTET = integers(min_value=0, max_value=255)
 IP_ADDRESSES = tuples(IP_OCTET, IP_OCTET, IP_OCTET, IP_OCTET)
 FAKE_TIMEZONE = 'Fake/Timezone'
-FAKE_API_BODY = json.dumps({'timezone': FAKE_TIMEZONE})
+FAKE_API_BODY = json.dumps({'status': 'success', 'timezone': FAKE_TIMEZONE})
 
 
 def setup_basic_api_response(body=FAKE_API_BODY):
@@ -44,7 +44,7 @@ def test_get_timezone_for_ip_explicit(ip_octets):
 
 
 @parameterized([
-    ({'status': 'success'}, tzupdate.NoTimezoneAvailableError),
+    ({'status': 'success', 'timezone': ''}, tzupdate.NoTimezoneAvailableError),
     ({'status': 'fail'}, tzupdate.IPAPIError),
     ({'status': 'fail', 'message': 'lolno'}, tzupdate.IPAPIError),
 ])

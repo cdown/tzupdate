@@ -26,19 +26,18 @@ def get_timezone_for_ip(ip_addr=None):
     current public IP address.
     '''
 
-    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip_addr or '')
+    api_url = 'http://ip-api.com/json/{ip}?fields=timezone,status,message'.format(ip=ip_addr or '')
     log.debug('Making request to %s', api_url)
     api_response = requests.get(api_url).json()
     log.debug('API response: %r', api_response)
-    try:
-        return api_response['timezone']
-    except KeyError:
-        if api_response.get('status') == 'success':
+    if api_response.get('status') == 'success':
+        if not api_response['timezone']:
             raise NoTimezoneAvailableError('No timezone found for this IP.')
-        else:
-            raise IPAPIError(
-                api_response.get('message', 'Unspecified API error.'),
-            )
+        return api_response['timezone']
+    else:
+        raise IPAPIError("API error: " +
+            api_response.get('message', 'Unspecified API error.'),
+        )
 
 
 def check_directory_traversal(base_dir, requested_path):
