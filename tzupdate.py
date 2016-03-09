@@ -137,9 +137,9 @@ def parse_args(argv):
         help='use this timezone instead of automatically detecting it'
     )
     parser.add_argument(
-        "-z", "--zoneinfo-path",
+        '-z', '--zoneinfo-path',
         default=DEFAULT_ZONEINFO_PATH,
-        help="path to root of the zoneinfo database (default: %(default)s)"
+        help='path to root of the zoneinfo database (default: %(default)s)'
     )
     parser.add_argument(
         '-l', '--localtime-path',
@@ -153,7 +153,7 @@ def parse_args(argv):
         )
     parser.add_argument(
         '--debug',
-        action="store_const", dest='log_level',
+        action='store_const', dest='log_level',
         const=logging.DEBUG, default=logging.WARNING,
         help='enable debug logging',
     )
