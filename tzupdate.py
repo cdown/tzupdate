@@ -183,10 +183,13 @@ def main(argv=None):
             timezone, args.zoneinfo_path, args.localtime_path,
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
-        wrote_etc_timezone = export_etc_timezone(timezone, args.etc_timezone_path)
-        if wrote_etc_timezone:
-            print('Wrote timezone %s to %s.' % (timezone, args.etc_timezone_path))
 
+        etc_tz_path = args.etc_timezone_path
+        wrote_etc_timezone = export_etc_timezone(timezone, etc_tz_path)
+        if wrote_etc_timezone:
+            print('Wrote timezone %s to %s.' % (timezone, etc_tz_path))
+        elif etc_tz_path != DEFAULT_ETC_TIMEZONE_PATH:
+            print('The user-supplied path %s was not found.' % etc_tz_path)
 
 class TimezoneUpdateException(Exception):
     '''
