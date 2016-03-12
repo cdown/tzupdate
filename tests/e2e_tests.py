@@ -47,17 +47,20 @@ def test_explicit_paths(link_localtime_mock, get_timezone_for_ip_mock):
 
 
 @mock.patch('tzupdate.get_timezone_for_ip')
+@mock.patch('tzupdate.export_etc_timezone')
 @mock.patch('tzupdate.link_localtime')
-def test_explicit_ip(_, get_timezone_for_ip_mock):
+def test_explicit_ip(_, export_etc_timezone_mock, get_timezone_for_ip_mock):
     ip_addr = '1.2.3.4'
     get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
     args = ['-a', ip_addr]
     tzupdate.main(args)
     assert_true(get_timezone_for_ip_mock.called_once_with(ip_addr))
+    assert_true(export_etc_timezone_mock.called)
 
 
 @mock.patch('tzupdate.link_localtime')
-def test_explicit_timezone(link_localtime_mock):
+@mock.patch('tzupdate.export_etc_timezone')
+def test_explicit_timezone(export_etc_timezone_mock, link_localtime_mock):
     timezone = 'Foo/Bar'
     args = ['-t', timezone]
     tzupdate.main(args)
@@ -65,5 +68,11 @@ def test_explicit_timezone(link_localtime_mock):
         link_localtime_mock.called_once_with(
             timezone,
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
+    )
+    assert_true(
+        export_etc_timezone_mock.called_once_with(
+            timezone,
+            tzupdate.DEFAULT_ETC_TIMEZONE_PATH,
         )
     )
