@@ -120,7 +120,7 @@ def export_etc_timezone(timezone, etc_timezone_path):
     if os.path.exists(etc_timezone_path):
         wrote_etc_timezone = True
         with open(etc_timezone_path, 'w') as fd:
-            fd.write(timezone)
+            fd.write(timezone+'\n')
     return wrote_etc_timezone
 
 
