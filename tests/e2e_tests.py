@@ -10,11 +10,16 @@ FAKE_TIMEZONE = 'E2E'
 
 @mock.patch('tzupdate.get_timezone_for_ip')
 @mock.patch('tzupdate.link_localtime')
-def test_end_to_end_no_args(link_localtime_mock, get_timezone_for_ip_mock):
+@mock.patch('tzupdate.export_etc_timezone')
+def test_end_to_end_no_args(export_etc_timezone_mock,
+                        link_localtime_mock,
+                        get_timezone_for_ip_mock):
+
     get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
     args = []
     tzupdate.main(args)
     assert_true(link_localtime_mock.called)
+    assert_true(export_etc_timezone_mock.called)
 
 
 @mock.patch('tzupdate.get_timezone_for_ip')
