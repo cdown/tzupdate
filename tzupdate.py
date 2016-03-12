@@ -122,16 +122,15 @@ def export_etc_timezone(timezone, etc_timezone_path):
         try:
             with open(etc_timezone_path, 'w') as fd:
                 fd.write(timezone+'\n')
-        except OSError as thrown_exc:
+        except (IOError,OSError) as thrown_exc:
             # If we don't have permission to write /etc/timezone, we probably
             # need to be root.
             if thrown_exc.errno == errno.EACCES:
-                raise OSError(
-                    thrown_exc.errno,
-                    'Could not link "%s" (%s). Are you root?' % (
+                msg = 'Could not link "%s" (%s). Are you root?' % (
                         etc_timezone_path, thrown_exc,
-                    ),
-                )
+                    )
+                thrown_exc.message = msg
+                raise thrown_exc
             elif thrown_exc.errno != errno.ENOENT:
                 raise
 
