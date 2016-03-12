@@ -32,16 +32,23 @@ def test_print_only_no_link(link_localtime_mock, get_timezone_for_ip_mock):
 
 
 @mock.patch('tzupdate.get_timezone_for_ip')
+@mock.patch('tzupdate.export_etc_timezone')
 @mock.patch('tzupdate.link_localtime')
-def test_explicit_paths(link_localtime_mock, get_timezone_for_ip_mock):
+def test_explicit_paths(link_localtime_mock, export_etc_timezone_mock, get_timezone_for_ip_mock):
     localtime_path = '/l'
     zoneinfo_path = '/z'
+    etc_timezone_path = '/e'
     get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
     args = ['-l', localtime_path, '-z', zoneinfo_path]
     tzupdate.main(args)
     assert_true(
         link_localtime_mock.called_once_with(
             FAKE_TIMEZONE, zoneinfo_path, localtime_path,
+        ),
+    )
+    assert_true(
+        export_etc_timezone_mock.called_once_with(
+            FAKE_TIMEZONE, etc_timezone_path,
         ),
     )
 
