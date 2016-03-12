@@ -122,7 +122,7 @@ def export_etc_timezone(timezone, etc_timezone_path):
         try:
             with open(etc_timezone_path, 'w') as fd:
                 fd.write(timezone+'\n')
-        except (IOError,OSError) as thrown_exc:
+        except (IOError, OSError) as thrown_exc:
             # If we don't have permission to write /etc/timezone, we probably
             # need to be root.
             if thrown_exc.errno == errno.EACCES:
