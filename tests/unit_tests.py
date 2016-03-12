@@ -165,10 +165,14 @@ def test_export_etc_timezone_exists(exists_mock):
 def test_export_etc_timezone_not_exists(exists_mock):
     exists_mock.return_value = False
 
-    wrote_etc_timezone = tzupdate.export_etc_timezone(FAKE_TIMEZONE,
+    m = mock.mock_open()
+    with mock.patch('tzupdate.open', m):
+        wrote_etc_timezone = tzupdate.export_etc_timezone(FAKE_TIMEZONE,
                                     tzupdate.DEFAULT_ETC_TIMEZONE_PATH
                                     )
 
     eq(wrote_etc_timezone, False)
+    m.assert_not_called()
+
 
 
