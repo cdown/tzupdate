@@ -77,9 +77,7 @@ def test_explicit_timezone(export_etc_timezone_mock, link_localtime_mock):
             tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
         )
     )
-    assert_true(
-        export_etc_timezone_mock.called_once_with(
+    export_etc_timezone_mock.assert_called_once_with(
             timezone,
-            tzupdate.DEFAULT_ETC_TIMEZONE_PATH,
-        )
-    )
+            tzupdate.DEFAULT_ETC_TIMEZONE_PATH
+            )
