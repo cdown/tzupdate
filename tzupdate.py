@@ -107,8 +107,11 @@ def export_etc_timezone(timezone, etc_timezone_path):
     Check whether the system uses a /etc/timezone file (or an equivalent
     provided by the user).  If so, write the name of the timezone to that file.
 
-    This has been confirmed as necessary on Raspbian running Debian 8.0,
-    expected to be necessary on other systems as well.
+    Debian-based distributions (since Etc, i.e. 4.0) use a /etc/timezone file.
+    See:
+
+        https://wiki.debian.org/TimeZoneChanges
+        https://help.ubuntu.com/community/UbuntuTime
 
     Return a boolean indicating whether the indicated file exists and was
     overwritten.
