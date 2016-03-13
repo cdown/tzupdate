@@ -56,7 +56,7 @@ def test_explicit_paths(link_localtime_mock, export_etc_timezone_mock, get_timez
 @mock.patch('tzupdate.get_timezone_for_ip')
 @mock.patch('tzupdate.export_etc_timezone')
 @mock.patch('tzupdate.link_localtime')
-def test_explicit_ip(_, get_timezone_for_ip_mock):
+def test_explicit_ip(_, export_etc_timezone_mock, get_timezone_for_ip_mock):
     ip_addr = '1.2.3.4'
     get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
     args = ['-a', ip_addr]
