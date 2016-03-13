@@ -130,9 +130,7 @@ def export_etc_timezone(timezone, etc_timezone_path):
                         etc_timezone_path, thrown_exc,
                     )
                 thrown_exc.message = msg
-                raise thrown_exc
-            elif thrown_exc.errno != errno.ENOENT:
-                raise
+            raise thrown_exc
 
     return wrote_etc_timezone
 
