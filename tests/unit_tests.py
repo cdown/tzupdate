@@ -141,3 +141,38 @@ def test_link_localtime_localtime_missing_no_raise(symlink_mock, isfile_mock,
         FAKE_TIMEZONE,
         tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
     )
+
+
+
+@mock.patch('tzupdate.os.path.exists')
+def test_export_etc_timezone_exists(exists_mock):
+    exists_mock.return_value = True
+
+    m = mock.mock_open()
+    with mock.patch('tzupdate.open', m):
+        wrote_etc_timezone = tzupdate.export_etc_timezone(FAKE_TIMEZONE,
+                                    tzupdate.DEFAULT_ETC_TIMEZONE_PATH
+                                    )
+
+    eq(wrote_etc_timezone, True)
+    m.assert_called_once_with(tzupdate.DEFAULT_ETC_TIMEZONE_PATH, 'w')
+
+    handle = m.return_value
+    handle.write.assert_called_once_with(FAKE_TIMEZONE+'\n')
+
+
+@mock.patch('tzupdate.os.path.exists')
+def test_export_etc_timezone_not_exists(exists_mock):
+    exists_mock.return_value = False
+
+    m = mock.mock_open()
+    with mock.patch('tzupdate.open', m):
+        wrote_etc_timezone = tzupdate.export_etc_timezone(FAKE_TIMEZONE,
+                                    tzupdate.DEFAULT_ETC_TIMEZONE_PATH
+                                    )
+
+    eq(wrote_etc_timezone, False)
+    m.assert_not_called()
+
+
+
