@@ -20,7 +20,7 @@ FAKE_API_BODY = json.dumps({'timezone': FAKE_TIMEZONE})
 
 
 def setup_basic_api_response(body=FAKE_API_BODY):
-    uri_regex = re.compile(r'^http://ip-api\.com/json/')
+    uri_regex = re.compile(r'^http://ipapi\.co/[0-9.]+/json/')
     httpretty.register_uri(
         httpretty.GET, uri_regex,
         body=body, content_type='application/json',
