@@ -4,55 +4,30 @@ import tzupdate
 import httpretty
 import os
 import errno
-import json
-import re
 import mock
-from nose.tools import assert_raises, eq_ as eq, assert_true
+from tests._test_utils import (IP_ADDRESSES, FAKE_SERVICES, FAKE_TIMEZONE,
+                               setup_basic_api_response)
+from nose.tools import assert_raises, eq_ as eq, assert_true, assert_in
 from nose_parameterized import parameterized
-from hypothesis import given
-from hypothesis.strategies import integers, tuples
+from hypothesis import given, settings
+from hypothesis.strategies import sampled_from, none, one_of
 
 
-IP_OCTET = integers(min_value=0, max_value=255)
-IP_ADDRESSES = tuples(IP_OCTET, IP_OCTET, IP_OCTET, IP_OCTET)
-FAKE_TIMEZONE = 'Fake/Timezone'
-FAKE_API_BODY = json.dumps({'timezone': FAKE_TIMEZONE})
-
-
-def setup_basic_api_response(body=FAKE_API_BODY):
-    uri_regex = re.compile(r'^http://ip-api\.com/json/')
-    httpretty.register_uri(
-        httpretty.GET, uri_regex,
-        body=body, content_type='application/json',
+@httpretty.activate
+@given(one_of(IP_ADDRESSES, none()))
+@given(sampled_from(FAKE_SERVICES))
+@settings(max_examples=20)
+def test_get_timezone_for_ip(ip, service):
+    fake_queue = mock.Mock()
+    setup_basic_api_response()
+    tzupdate.get_timezone_for_ip(
+        ip=ip, service=service, queue_obj=fake_queue,
     )
 
+    if ip is not None:
+        assert_in(ip, httpretty.last_request().path)
 
-@httpretty.activate
-def test_get_timezone_for_ip_none():
-    setup_basic_api_response()
-    got_timezone = tzupdate.get_timezone_for_ip()
-    eq(got_timezone, FAKE_TIMEZONE)
-
-
-@httpretty.activate
-@given(IP_ADDRESSES)
-def test_get_timezone_for_ip_explicit(ip_octets):
-    setup_basic_api_response()
-    ip_addr = '.'.join(map(str, ip_octets))
-    got_timezone = tzupdate.get_timezone_for_ip(ip_addr)
-    eq(got_timezone, FAKE_TIMEZONE)
-
-
-@parameterized([
-    ({'status': 'success'}, tzupdate.NoTimezoneAvailableError),
-    ({'status': 'fail'}, tzupdate.IPAPIError),
-    ({'status': 'fail', 'message': 'lolno'}, tzupdate.IPAPIError),
-])
-@httpretty.activate
-def test_get_timezone_for_ip_api_error_types(error_body, expected_exception):
-    setup_basic_api_response(body=json.dumps(error_body))
-    with assert_raises(expected_exception):
-        tzupdate.get_timezone_for_ip()
+    fake_queue.put.assert_called_once_with(FAKE_TIMEZONE)
 
 
 @mock.patch('tzupdate.os.unlink')

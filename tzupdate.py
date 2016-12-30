@@ -12,7 +12,9 @@ import sys
 import requests
 import errno
 import logging
+import collections
 
+from multiprocessing import Queue, Process
 
 log = logging.getLogger(__name__)
 
@@ -20,25 +22,43 @@ DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
 
 
-def get_timezone_for_ip(ip_addr=None):
-    '''
-    Return the timezone for the specified IP, or if no IP is specified, use the
-    current public IP address.
-    '''
+# url: A url with an "ip" key to be replaced with an optional IP
+# tz_keys: The key hierarchy to get the timezone from
+# error_key: Optionally, where to get error messages from
+GeoIPService = collections.namedtuple(
+    'GeoIPService', ['url', 'tz_keys', 'error_key'],
+)
 
-    api_url = 'http://ip-api.com/json/{ip}'.format(ip=ip_addr or '')
-    log.debug('Making request to %s', api_url)
+SERVICES = set([
+    GeoIPService(
+        'http://ip-api.com/json/{ip}', ('timezone',), 'message',
+    ),
+    GeoIPService(
+        'https://freegeoip.net/json/{ip}', ('time_zone',), None,
+    ),
+    GeoIPService(
+        'http://geoip.nekudo.com/api/{ip}', ('location', 'time_zone'), 'msg',
+    ),
+])
+
+
+def get_timezone_for_ip(ip, service, queue_obj):
+    api_url = service.url.format(ip=ip or '')
     api_response = requests.get(api_url).json()
-    log.debug('API response: %r', api_response)
-    try:
-        return api_response['timezone']
-    except KeyError:
-        if api_response.get('status') == 'success':
-            raise NoTimezoneAvailableError('No timezone found for this IP.')
-        else:
-            raise IPAPIError(
-                api_response.get('message', 'Unspecified API error.'),
+    log.debug('API response from %s: %r', api_url, api_response)
+
+    tz = api_response
+
+    for key in service.tz_keys:
+        tz = tz.get(key)
+        if tz is None:
+            raise TimezoneAcquisitionError(
+                api_response.get(service.error_key, 'Unspecified API error.')
             )
+        elif not tz:
+            raise TimezoneAcquisitionError('No timezone found for this IP.')
+
+    queue_obj.put(tz)
 
 
 def check_directory_traversal(base_dir, requested_path):
@@ -137,7 +157,8 @@ def parse_args(argv):
     return args
 
 
-def main(argv=None):
+def main(argv=None, services=SERVICES):
+
     if argv is None:
         argv = sys.argv[1:]
 
@@ -148,7 +169,21 @@ def main(argv=None):
         timezone = args.timezone
         print('Using explicitly passed timezone: %s' % timezone)
     else:
-        timezone = get_timezone_for_ip(args.ip)
+        q = Queue()
+
+        threads = [
+            Process(target=get_timezone_for_ip, args=(args.ip, svc, q))
+            for svc in services
+        ]
+
+        for t in threads:
+            t.start()
+
+        timezone = q.get()
+
+        for t in threads:
+            t.terminate()
+
         print('Detected timezone is %s.' % timezone)
 
     if not args.print_only:
@@ -170,12 +205,6 @@ class TimezoneNotLocallyAvailableError(TimezoneUpdateException):
     '''
 
 
-class NoTimezoneAvailableError(TimezoneUpdateException):
-    '''
-    Raised when the API did not return a timezone.
-    '''
-
-
 class DirectoryTraversalError(TimezoneUpdateException):
     '''
     Raised when the timezone path returned by the API would result in directory
@@ -183,7 +212,7 @@ class DirectoryTraversalError(TimezoneUpdateException):
     '''
 
 
-class IPAPIError(TimezoneUpdateException):
+class TimezoneAcquisitionError(TimezoneUpdateException):
     '''
     Raised when IP-API raises an internal error.
     '''
