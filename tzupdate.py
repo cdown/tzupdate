@@ -16,6 +16,11 @@ import collections
 
 from multiprocessing import Queue, Process
 
+try:
+    from queue import Empty
+except ImportError:  # Python 2 fallback
+    from Queue import Empty
+
 log = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
@@ -148,6 +153,13 @@ def parse_args(argv):
         help='path to localtime symlink (default: %(default)s)'
     )
     parser.add_argument(
+        '-s', '--timeout',
+        help='maximum number of seconds to wait for APIs to return (default: '
+             '%(default)s)',
+        type=float,
+        default=5.0,
+    )
+    parser.add_argument(
         '--debug',
         action="store_const", dest='log_level',
         const=logging.DEBUG, default=logging.WARNING,
@@ -179,10 +191,15 @@ def main(argv=None, services=SERVICES):
         for t in threads:
             t.start()
 
-        timezone = q.get()
-
-        for t in threads:
-            t.terminate()
+        try:
+            timezone = q.get(block=True, timeout=args.timeout)
+        except Empty:
+            raise TimezoneAcquisitionError(
+                "No response from any API in {} seconds".format(args.timeout)
+            )
+        finally:
+            for t in threads:
+                t.terminate()
 
         print('Detected timezone is %s.' % timezone)
 
