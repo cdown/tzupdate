@@ -222,13 +222,9 @@ def main(argv=None, services=SERVICES):
     if args.print_only:
         print('Detected timezone is %s.' % timezone)
     else:
-        zoneinfo_tz_path = link_localtime(
-            timezone, args.zoneinfo_path, args.localtime_path,
-        )
-        print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
-
+        link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
         write_debian_timezone(timezone, args.debian_timezone_path)
-        print('Wrote "%s" to %s.' % (timezone, args.debian_timezone_path))
+        print('Set system timezone to %s.' % timezone)
 
 
 class TimezoneUpdateException(Exception):
