@@ -1,54 +1,59 @@
 #!/usr/bin/env python2
 
+import httpretty
 import tzupdate
 import mock
-from nose.tools import assert_true, assert_false
+from nose.tools import assert_false, assert_raises
+from tests._test_utils import (FAKE_SERVICES, FAKE_TIMEZONE,
+                               setup_basic_api_response)
 
 
-FAKE_TIMEZONE = 'E2E'
-
-
-@mock.patch('tzupdate.get_timezone_for_ip')
+@httpretty.activate
 @mock.patch('tzupdate.link_localtime')
-def test_end_to_end_no_args(link_localtime_mock, get_timezone_for_ip_mock):
-    get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
+def test_end_to_end_no_args(link_localtime_mock):
+    setup_basic_api_response()
     args = []
-    tzupdate.main(args)
-    assert_true(link_localtime_mock.called)
-
-
-@mock.patch('tzupdate.get_timezone_for_ip')
-@mock.patch('tzupdate.link_localtime')
-def test_print_only_no_link(link_localtime_mock, get_timezone_for_ip_mock):
-    get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
-    args = ['-p']
-    tzupdate.main(args)
-    assert_false(link_localtime_mock.called)
-
-
-@mock.patch('tzupdate.get_timezone_for_ip')
-@mock.patch('tzupdate.link_localtime')
-def test_explicit_paths(link_localtime_mock, get_timezone_for_ip_mock):
-    localtime_path = '/l'
-    zoneinfo_path = '/z'
-    get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
-    args = ['-l', localtime_path, '-z', zoneinfo_path]
-    tzupdate.main(args)
-    assert_true(
-        link_localtime_mock.called_once_with(
-            FAKE_TIMEZONE, zoneinfo_path, localtime_path,
-        ),
+    tzupdate.main(args, services=FAKE_SERVICES)
+    link_localtime_mock.assert_called_once_with(
+        FAKE_TIMEZONE, tzupdate.DEFAULT_ZONEINFO_PATH,
+        tzupdate.DEFAULT_LOCALTIME_PATH,
     )
 
 
-@mock.patch('tzupdate.get_timezone_for_ip')
+@httpretty.activate
 @mock.patch('tzupdate.link_localtime')
-def test_explicit_ip(_, get_timezone_for_ip_mock):
+def test_print_only_no_link(link_localtime_mock):
+    setup_basic_api_response()
+    args = ['-p']
+    tzupdate.main(args, services=FAKE_SERVICES)
+    assert_false(link_localtime_mock.called)
+
+
+@httpretty.activate
+@mock.patch('tzupdate.link_localtime')
+def test_explicit_paths(link_localtime_mock):
+    setup_basic_api_response()
+    localtime_path = '/l'
+    zoneinfo_path = '/z'
+    args = ['-l', localtime_path, '-z', zoneinfo_path]
+    tzupdate.main(args, services=FAKE_SERVICES)
+    link_localtime_mock.assert_called_once_with(
+        FAKE_TIMEZONE, zoneinfo_path, localtime_path,
+    )
+
+
+@httpretty.activate
+@mock.patch('tzupdate.link_localtime')
+def test_explicit_ip(_):
+    setup_basic_api_response()
     ip_addr = '1.2.3.4'
-    get_timezone_for_ip_mock.return_value = FAKE_TIMEZONE
     args = ['-a', ip_addr]
-    tzupdate.main(args)
-    assert_true(get_timezone_for_ip_mock.called_once_with(ip_addr))
+    tzupdate.main(args, services=FAKE_SERVICES)
+
+    # TODO (#16): httpretty.last_request() and
+    # get_timezone_for_ip.assert_called_once_with don't work for testing here
+    # because of the threading we use. We need to work out a good solution for
+    # this in
 
 
 @mock.patch('tzupdate.link_localtime')
@@ -56,9 +61,19 @@ def test_explicit_timezone(link_localtime_mock):
     timezone = 'Foo/Bar'
     args = ['-t', timezone]
     tzupdate.main(args)
-    assert_true(
-        link_localtime_mock.called_once_with(
-            timezone,
-            tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
-        )
+    link_localtime_mock.assert_called_once_with(
+        timezone,
+        tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
     )
+
+
+@httpretty.activate
+@mock.patch('tzupdate.Process')
+@mock.patch('tzupdate.link_localtime')
+def test_timeout_results_in_exception(link_localtime_mock, process_mock):
+    # The process mock causes us to never run get_timezone_from_ip, so we
+    # should time out
+    setup_basic_api_response()
+    args = ['-s', '0.01']
+    with assert_raises(tzupdate.TimezoneAcquisitionError):
+        tzupdate.main(args, services=FAKE_SERVICES)
