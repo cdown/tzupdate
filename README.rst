@@ -21,7 +21,7 @@ to pass an IP address to use, instead of geolocating you.
 ::
 
     $ sudo tzupdate
-    Linked /etc/localtime to /usr/share/zoneinfo/Europe/Dublin.
+    Set system timezone to Europe/London.
 
 
 Installation
