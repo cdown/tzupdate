@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
 DEFAULT_LOCALTIME_PATH = '/etc/localtime'
+DEFAULT_DEBIAN_TIMEZONE_PATH = '/etc/timezone'
 
 
 # url: A url with an "ip" key to be replaced with an optional IP
@@ -62,6 +63,20 @@ def get_timezone_for_ip(ip, service, queue_obj):
             )
 
     queue_obj.put(tz)
+
+
+def write_debian_timezone(timezone, debian_timezone_path):
+    '''
+    Debian and derivatives also have /etc/timezone, which is used for a human
+    readable timezone. Without this, dpkg-reconfigure will nuke /etc/localtime
+    on reconfigure.
+    '''
+    old_umask = os.umask(0o133)
+    try:
+        with open(debian_timezone_path, 'w') as debian_tz_f:
+            debian_tz_f.write(timezone + '\n')
+    finally:
+        os.umask(old_umask)
 
 
 def check_directory_traversal(base_dir, requested_path):
@@ -151,6 +166,11 @@ def parse_args(argv):
         help='path to localtime symlink (default: %(default)s)'
     )
     parser.add_argument(
+        '-d', '--debian-timezone-path',
+        default=DEFAULT_DEBIAN_TIMEZONE_PATH,
+        help='path to Debian timezone name file (default: %(default)s)'
+    )
+    parser.add_argument(
         '-s', '--timeout',
         help='maximum number of seconds to wait for APIs to return (default: '
              '%(default)s)',
@@ -199,13 +219,16 @@ def main(argv=None, services=SERVICES):
             for t in threads:
                 t.terminate()
 
+    if args.print_only:
         print('Detected timezone is %s.' % timezone)
-
-    if not args.print_only:
+    else:
         zoneinfo_tz_path = link_localtime(
             timezone, args.zoneinfo_path, args.localtime_path,
         )
         print('Linked %s to %s.' % (args.localtime_path, zoneinfo_tz_path))
+
+        write_debian_timezone(timezone, args.debian_timezone_path)
+        print('Wrote "%s" to %s.' % (timezone, args.debian_timezone_path))
 
 
 class TimezoneUpdateException(Exception):

@@ -10,7 +10,7 @@ from tests._test_utils import (IP_ADDRESSES, FAKE_SERVICES, FAKE_TIMEZONE,
 from nose.tools import assert_raises, eq_ as eq, assert_true, assert_in
 from nose_parameterized import parameterized
 from hypothesis import given, settings
-from hypothesis.strategies import sampled_from, none, one_of
+from hypothesis.strategies import sampled_from, none, one_of, text
 
 
 @httpretty.activate
@@ -142,3 +142,14 @@ def test_link_localtime_localtime_missing_no_raise(symlink_mock, isfile_mock,
         FAKE_TIMEZONE,
         tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
     )
+
+
+@given(text())
+@given(text())
+@settings(max_examples=20)
+def test_debian_tz_path(timezone, tz_path):
+    mo = mock.mock_open()
+    with mock.patch('tzupdate.open', mo, create=True):
+        tzupdate.write_debian_timezone(timezone, tz_path)
+        mo.assert_called_once_with(tz_path, 'w')
+        mo().write.assert_called_once_with(timezone + '\n')
