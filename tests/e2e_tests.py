@@ -3,7 +3,7 @@
 import httpretty
 import tzupdate
 import mock
-from nose.tools import assert_false
+from nose.tools import assert_false, assert_raises
 from tests._test_utils import (FAKE_SERVICES, FAKE_TIMEZONE,
                                setup_basic_api_response)
 
@@ -65,3 +65,15 @@ def test_explicit_timezone(link_localtime_mock):
         timezone,
         tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH,
     )
+
+
+@httpretty.activate
+@mock.patch('tzupdate.Process')
+@mock.patch('tzupdate.link_localtime')
+def test_timeout_results_in_exception(link_localtime_mock, process_mock):
+    # The process mock causes us to never run get_timezone_from_ip, so we
+    # should time out
+    setup_basic_api_response()
+    args = ['-s', '0.01']
+    with assert_raises(tzupdate.TimezoneAcquisitionError):
+        tzupdate.main(args, services=FAKE_SERVICES)
