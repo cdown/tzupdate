@@ -56,12 +56,10 @@ def get_timezone_for_ip(ip, service, queue_obj):
 
     for key in service.tz_keys:
         tz = tz.get(key)
-        if tz is None:
+        if not tz:
             raise TimezoneAcquisitionError(
                 api_response.get(service.error_key, 'Unspecified API error.')
             )
-        elif not tz:
-            raise TimezoneAcquisitionError('No timezone found for this IP.')
 
     queue_obj.put(tz)
 

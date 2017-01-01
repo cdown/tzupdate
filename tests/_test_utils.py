@@ -29,21 +29,32 @@ FAKE_SERVICES = set([
 ])
 
 
-def setup_basic_api_response(services=None):
+def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
+    '''
+    If `empty_resp', we return a totally empty API response, except for any
+    error message.
+
+    If `empty_val', the tz_key is an empty string.
+    '''
     if services is None:
         services = FAKE_SERVICES
 
     for service in services:
         url_regex = re.compile(service.url.format(ip=r'.*'))
         api_body = {}
-        cur_level = api_body
 
-        for i, key in enumerate(service.tz_keys, start=1):
-            if i == len(service.tz_keys):
-                cur_level[key] = FAKE_TIMEZONE
-            else:
-                cur_level[key] = {}
-                cur_level = cur_level[key]
+        if not empty_resp:
+            cur_level = api_body
+
+            for i, key in enumerate(service.tz_keys, start=1):
+                if i == len(service.tz_keys):
+                    if empty_val:
+                        cur_level[key] = ''
+                    else:
+                        cur_level[key] = FAKE_TIMEZONE
+                else:
+                    cur_level[key] = {}
+                    cur_level = cur_level[key]
 
         # If this already exists, it means that service.tz_keys is
         # (service.error_key,), which makes no sense...

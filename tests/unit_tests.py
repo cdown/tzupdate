@@ -30,6 +30,32 @@ def test_get_timezone_for_ip(ip, service):
     fake_queue.put.assert_called_once_with(FAKE_TIMEZONE)
 
 
+@httpretty.activate
+@given(one_of(IP_ADDRESSES, none()))
+@given(sampled_from(FAKE_SERVICES))
+@settings(max_examples=20)
+def test_get_timezone_for_ip_empty_resp(ip, service):
+    fake_queue = mock.Mock()
+    setup_basic_api_response(empty_resp=True)
+    with assert_raises(tzupdate.TimezoneAcquisitionError):
+        tzupdate.get_timezone_for_ip(
+            ip=ip, service=service, queue_obj=fake_queue,
+        )
+
+
+@httpretty.activate
+@given(one_of(IP_ADDRESSES, none()))
+@given(sampled_from(FAKE_SERVICES))
+@settings(max_examples=20)
+def test_get_timezone_for_ip_empty_val(ip, service):
+    fake_queue = mock.Mock()
+    setup_basic_api_response(empty_val=True)
+    with assert_raises(tzupdate.TimezoneAcquisitionError):
+        tzupdate.get_timezone_for_ip(
+            ip=ip, service=service, queue_obj=fake_queue,
+        )
+
+
 @mock.patch('tzupdate.os.unlink')
 @mock.patch('tzupdate.os.symlink')
 @mock.patch('tzupdate.os.path.isfile')
