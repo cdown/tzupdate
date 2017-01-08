@@ -248,7 +248,7 @@ class DirectoryTraversalError(TimezoneUpdateException):
 
 class TimezoneAcquisitionError(TimezoneUpdateException):
     '''
-    Raised when IP-API raises an internal error.
+    Raised when a timezone API raises an internal error.
     '''
 
 
