@@ -35,7 +35,7 @@ GeoIPService = collections.namedtuple(
     'GeoIPService', ['url', 'tz_keys', 'error_key'],
 )
 
-SERVICES = set([
+SERVICES = frozenset([
     GeoIPService(
         'http://ip-api.com/json/{ip}', ('timezone',), 'message',
     ),
