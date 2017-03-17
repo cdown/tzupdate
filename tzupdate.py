@@ -220,7 +220,7 @@ def main(argv=None, services=SERVICES):
                 t.terminate()
 
     if args.print_only:
-        print('Detected timezone is %s.' % timezone)
+        print(timezone)
     else:
         link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
         write_debian_timezone(timezone, args.debian_timezone_path)
