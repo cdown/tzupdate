@@ -35,7 +35,7 @@ GeoIPService = collections.namedtuple(
     'GeoIPService', ['url', 'tz_keys', 'error_key'],
 )
 
-SERVICES = set([
+SERVICES = frozenset([
     GeoIPService(
         'http://ip-api.com/json/{ip}', ('timezone',), 'message',
     ),
@@ -220,7 +220,7 @@ def main(argv=None, services=SERVICES):
                 t.terminate()
 
     if args.print_only:
-        print('Detected timezone is %s.' % timezone)
+        print(timezone)
     else:
         link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
         write_debian_timezone(timezone, args.debian_timezone_path)
@@ -248,7 +248,7 @@ class DirectoryTraversalError(TimezoneUpdateException):
 
 class TimezoneAcquisitionError(TimezoneUpdateException):
     '''
-    Raised when IP-API raises an internal error.
+    Raised when a timezone API raises an internal error.
     '''
 
 
