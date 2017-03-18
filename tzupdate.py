@@ -30,22 +30,30 @@ DEFAULT_DEBIAN_TIMEZONE_PATH = '/etc/timezone'
 
 # url: A url with an "ip" key to be replaced with an optional IP
 # tz_keys: The key hierarchy to get the timezone from
-# error_key: Optionally, where to get error messages from
+# error_keys: Optionally, where to get error messages from
 GeoIPService = collections.namedtuple(
-    'GeoIPService', ['url', 'tz_keys', 'error_key'],
+    'GeoIPService', ['url', 'tz_keys', 'error_keys'],
 )
 
 SERVICES = frozenset([
     GeoIPService(
-        'http://ip-api.com/json/{ip}', ('timezone',), 'message',
+        'http://ip-api.com/json/{ip}', ('timezone',), ('message',),
     ),
     GeoIPService(
         'https://freegeoip.net/json/{ip}', ('time_zone',), None,
     ),
     GeoIPService(
-        'http://geoip.nekudo.com/api/{ip}', ('location', 'time_zone'), 'msg',
+        'http://geoip.nekudo.com/api/{ip}',
+        ('location', 'time_zone'), ('msg',),
     ),
 ])
+
+
+def get_deep(item, keys):
+    tmp = item
+    for key in keys:
+        tmp = tmp[key]
+    return tmp
 
 
 def get_timezone_for_ip(ip, service, queue_obj):
@@ -53,14 +61,18 @@ def get_timezone_for_ip(ip, service, queue_obj):
     api_response = requests.get(api_url).json()
     log.debug('API response from %s: %r', api_url, api_response)
 
-    tz = api_response
-
-    for key in service.tz_keys:
-        tz = tz.get(key)
+    try:
+        tz = get_deep(api_response, service.tz_keys)
         if not tz:
-            raise TimezoneAcquisitionError(
-                api_response.get(service.error_key, 'Unspecified API error.')
-            )
+            raise KeyError
+    except KeyError:
+        msg = 'Unspecified API error.'
+        if service.error_keys is not None:
+            try:
+                msg = get_deep(api_response, service.error_keys)
+            except KeyError:
+                pass
+        raise TimezoneAcquisitionError(msg)
 
     queue_obj.put(tz)
 

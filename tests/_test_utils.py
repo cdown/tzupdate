@@ -18,13 +18,14 @@ FAKE_ERROR = 'Virus = very yes'
 
 FAKE_SERVICES = set([
     tzupdate.GeoIPService(
-        'http://example.com/json/{ip}', ('timezone',), 'message',
+        'http://example.com/json/{ip}', ('timezone',), ('message',),
     ),
     tzupdate.GeoIPService(
         'https://doesnotexistreally.com/{ip}', ('time_zone',), None,
     ),
     tzupdate.GeoIPService(
-        'http://tzupdate.com/foo/bar/{ip}', ('location', 'time_zone'), 'msg',
+        'http://tzupdate.com/foo/bar/{ip}', ('location', 'time_zone'),
+        ('msg',),
     ),
 ])
 
@@ -56,12 +57,13 @@ def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
                     cur_level[key] = {}
                     cur_level = cur_level[key]
 
-        # If this already exists, it means that service.tz_keys is
-        # (service.error_key,), which makes no sense...
-        assert service.error_key not in api_body
-
-        if service.error_key is not None:
-            api_body[service.error_key] = FAKE_ERROR
+        tmp = {}
+        if service.error_keys:
+            for i, key in enumerate(reversed(service.error_keys)):
+                if i == 0:
+                    tmp[key] = FAKE_ERROR
+                else:
+                    tmp[key] = tmp.copy()
 
         httpretty.register_uri(
             httpretty.GET, url_regex,
