@@ -46,6 +46,10 @@ SERVICES = frozenset([
         'http://geoip.nekudo.com/api/{ip}',
         ('location', 'time_zone'), ('msg',),
     ),
+    GeoIPService(
+        'https://timezoneapi.io/api/ip/?{ip}',
+        ('data', 'timezone', 'id'), ('meta', 'message'),
+    ),
 ])
 
 
