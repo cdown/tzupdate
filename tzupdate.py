@@ -40,7 +40,7 @@ SERVICES = frozenset([
         'http://ip-api.com/json/{ip}', ('timezone',), ('message',),
     ),
     GeoIPService(
-        'https://freegeoip.net/json/{ip}', ('time_zone',), None,
+        'https://freegeoip.app/json/{ip}', ('time_zone',), None,
     ),
     GeoIPService(
         'http://geoip.nekudo.com/api/{ip}',
