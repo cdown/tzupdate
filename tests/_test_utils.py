@@ -16,7 +16,7 @@ IP_ADDRESSES = builds(
 FAKE_TIMEZONE = 'Fake/Timezone'
 FAKE_ERROR = 'Virus = very yes'
 
-FAKE_SERVICES = set([
+FAKE_SERVICES = [
     tzupdate.GeoIPService(
         'http://example.com/json/{ip}', ('timezone',), ('message',),
     ),
@@ -27,7 +27,7 @@ FAKE_SERVICES = set([
         'http://tzupdate.com/foo/bar/{ip}', ('location', 'time_zone'),
         ('msg',),
     ),
-])
+]
 
 
 def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
