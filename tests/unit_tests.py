@@ -15,8 +15,7 @@ from hypothesis.strategies import sampled_from, none, one_of, text
 
 
 @httpretty.activate
-@given(one_of(IP_ADDRESSES, none()))
-@given(sampled_from(FAKE_SERVICES))
+@given(one_of(IP_ADDRESSES, none()), sampled_from(FAKE_SERVICES))
 @settings(max_examples=20)
 def test_get_timezone_for_ip(ip, service):
     fake_queue = mock.Mock()
@@ -32,8 +31,7 @@ def test_get_timezone_for_ip(ip, service):
 
 
 @httpretty.activate
-@given(one_of(IP_ADDRESSES, none()))
-@given(sampled_from(FAKE_SERVICES))
+@given(one_of(IP_ADDRESSES, none()), sampled_from(FAKE_SERVICES))
 @settings(max_examples=20)
 def test_get_timezone_for_ip_empty_resp(ip, service):
     fake_queue = mock.Mock()
@@ -44,8 +42,7 @@ def test_get_timezone_for_ip_empty_resp(ip, service):
 
 
 @httpretty.activate
-@given(one_of(IP_ADDRESSES, none()))
-@given(sampled_from(FAKE_SERVICES))
+@given(one_of(IP_ADDRESSES, none()), sampled_from(FAKE_SERVICES))
 @settings(max_examples=20)
 def test_get_timezone_for_ip_empty_val(ip, service):
     fake_queue = mock.Mock()
@@ -143,8 +140,7 @@ def test_link_localtime_localtime_missing_no_raise(symlink_mock, isfile_mock,
     )
 
 
-@given(text())
-@given(text())
+@given(text(), text())
 @settings(max_examples=20)
 def test_debian_tz_path(timezone, tz_path):
     mo = mock.mock_open()
