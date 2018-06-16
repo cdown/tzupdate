@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-'''
+"""
 Set the system timezone based on IP geolocation.
-'''
+"""
 
 from __future__ import print_function
 
@@ -23,64 +23,76 @@ except ImportError:  # Python 2 fallback
 
 log = logging.getLogger(__name__)
 
-DEFAULT_ZONEINFO_PATH = '/usr/share/zoneinfo'
-DEFAULT_LOCALTIME_PATH = '/etc/localtime'
-DEFAULT_DEBIAN_TIMEZONE_PATH = '/etc/timezone'
+DEFAULT_ZONEINFO_PATH = "/usr/share/zoneinfo"
+DEFAULT_LOCALTIME_PATH = "/etc/localtime"
+DEFAULT_DEBIAN_TIMEZONE_PATH = "/etc/timezone"
 
 
 # url: A url with an "ip" key to be replaced with an optional IP
 # tz_keys: The key hierarchy to get the timezone from
-# error_key: Optionally, where to get error messages from
-GeoIPService = collections.namedtuple(
-    'GeoIPService', ['url', 'tz_keys', 'error_key'],
+# error_keys: Optionally, where to get error messages from
+GeoIPService = collections.namedtuple("GeoIPService", ["url", "tz_keys", "error_keys"])
+
+SERVICES = frozenset(
+    [
+        GeoIPService("http://ip-api.com/json/{ip}", ("timezone",), ("message",)),
+        GeoIPService("https://freegeoip.app/json/{ip}", ("time_zone",), None),
+        GeoIPService(
+            "http://geoip.nekudo.com/api/{ip}", ("location", "time_zone"), ("msg",)
+        ),
+        GeoIPService(
+            "https://timezoneapi.io/api/ip/?{ip}",
+            ("data", "timezone", "id"),
+            ("meta", "message"),
+        ),
+    ]
 )
 
-SERVICES = frozenset([
-    GeoIPService(
-        'http://ip-api.com/json/{ip}', ('timezone',), 'message',
-    ),
-    GeoIPService(
-        'https://freegeoip.net/json/{ip}', ('time_zone',), None,
-    ),
-    GeoIPService(
-        'http://geoip.nekudo.com/api/{ip}', ('location', 'time_zone'), 'msg',
-    ),
-])
+
+def get_deep(item, keys):
+    tmp = item
+    for key in keys:
+        tmp = tmp[key]
+    return tmp
 
 
 def get_timezone_for_ip(ip, service, queue_obj):
-    api_url = service.url.format(ip=ip or '')
+    api_url = service.url.format(ip=ip or "")
     api_response = requests.get(api_url).json()
-    log.debug('API response from %s: %r', api_url, api_response)
+    log.debug("API response from %s: %r", api_url, api_response)
 
-    tz = api_response
-
-    for key in service.tz_keys:
-        tz = tz.get(key)
+    try:
+        tz = get_deep(api_response, service.tz_keys)
         if not tz:
-            raise TimezoneAcquisitionError(
-                api_response.get(service.error_key, 'Unspecified API error.')
-            )
-
-    queue_obj.put(tz)
+            raise KeyError
+    except KeyError:
+        msg = "Unspecified API error."
+        if service.error_keys is not None:
+            try:
+                msg = get_deep(api_response, service.error_keys)
+            except KeyError:
+                pass
+        log.debug("%s failed: %s", service.url.format(ip=""), msg)
+    else:
+        queue_obj.put(tz)
 
 
 def write_debian_timezone(timezone, debian_timezone_path):
-    '''
+    """
     Debian and derivatives also have /etc/timezone, which is used for a human
     readable timezone. Without this, dpkg-reconfigure will nuke /etc/localtime
     on reconfigure.
-    '''
+    """
     old_umask = os.umask(0o133)
     try:
-        with open(debian_timezone_path, 'w') as debian_tz_f:
-            debian_tz_f.write(timezone + '\n')
+        with open(debian_timezone_path, "w") as debian_tz_f:
+            debian_tz_f.write(timezone + "\n")
     finally:
         os.umask(old_umask)
 
 
 def check_directory_traversal(base_dir, requested_path):
-    '''
+    """
     Check for directory traversal, and raise an exception if it was detected.
 
     Since we are linking based upon the output of some data we retrieved over
@@ -90,34 +102,33 @@ def check_directory_traversal(base_dir, requested_path):
     This function checks that the base directory of the zoneinfo database
     shares a common prefix with the absolute path of the requested zoneinfo
     file.
-    '''
-    log.debug('Checking for traversal in path %s', requested_path)
+    """
+    log.debug("Checking for traversal in path %s", requested_path)
     requested_path_abs = os.path.abspath(requested_path)
-    log.debug('Absolute path of requested path is %s', requested_path_abs)
+    log.debug("Absolute path of requested path is %s", requested_path_abs)
     if os.path.commonprefix([base_dir, requested_path_abs]) != base_dir:
         raise DirectoryTraversalError(
-            '%r (%r) is outside base directory %r, refusing to run' % (
-                requested_path, requested_path_abs, base_dir,
-            )
+            "%r (%r) is outside base directory %r, refusing to run"
+            % (requested_path, requested_path_abs, base_dir)
         )
 
 
 def link_localtime(timezone, zoneinfo_path, localtime_path):
-    '''
+    """
     Link a timezone file from the zoneinfo database to /etc/localtime.
 
     Since we may be retrieving the timezone file's relative path from an
     untrusted source, we also do checks to make sure that no directory
     traversal is going on. See `check_directory_traversal` for information
     about how that works.
-    '''
+    """
     zoneinfo_tz_path = os.path.join(zoneinfo_path, timezone)
     check_directory_traversal(zoneinfo_path, zoneinfo_tz_path)
 
     if not os.path.isfile(zoneinfo_tz_path):
         raise TimezoneNotLocallyAvailableError(
             'Timezone "%s" requested, but this timezone is not available on '
-            'your operating system.' % timezone
+            "your operating system." % timezone
         )
 
     try:
@@ -128,9 +139,8 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
         if thrown_exc.errno == errno.EACCES:
             raise OSError(
                 thrown_exc.errno,
-                'Could not link "%s" (%s). Are you root?' % (
-                    localtime_path, thrown_exc,
-                ),
+                'Could not link "%s" (%s). Are you root?'
+                % (localtime_path, thrown_exc),
             )
         elif thrown_exc.errno != errno.ENOENT:
             raise
@@ -143,45 +153,52 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '-p', '--print-only',
-        action='store_true',
-        help="print the timezone, but don't update the localtime file"
+        "-p",
+        "--print-only",
+        action="store_true",
+        help="print the timezone, but don't update the localtime file",
     )
     parser.add_argument(
-        '-a', '--ip',
-        help='use this IP instead of automatically detecting it'
+        "-a", "--ip", help="use this IP instead of automatically detecting it"
     )
     parser.add_argument(
-        '-t', '--timezone',
-        help='use this timezone instead of automatically detecting it'
+        "-t",
+        "--timezone",
+        help="use this timezone instead of automatically detecting it",
     )
     parser.add_argument(
-        "-z", "--zoneinfo-path",
+        "-z",
+        "--zoneinfo-path",
         default=DEFAULT_ZONEINFO_PATH,
-        help="path to root of the zoneinfo database (default: %(default)s)"
+        help="path to root of the zoneinfo database (default: %(default)s)",
     )
     parser.add_argument(
-        '-l', '--localtime-path',
+        "-l",
+        "--localtime-path",
         default=DEFAULT_LOCALTIME_PATH,
-        help='path to localtime symlink (default: %(default)s)'
+        help="path to localtime symlink (default: %(default)s)",
     )
     parser.add_argument(
-        '-d', '--debian-timezone-path',
+        "-d",
+        "--debian-timezone-path",
         default=DEFAULT_DEBIAN_TIMEZONE_PATH,
-        help='path to Debian timezone name file (default: %(default)s)'
+        help="path to Debian timezone name file (default: %(default)s)",
     )
     parser.add_argument(
-        '-s', '--timeout',
-        help='maximum number of seconds to wait for APIs to return (default: '
-             '%(default)s)',
+        "-s",
+        "--timeout",
+        help="maximum number of seconds to wait for APIs to return (default: "
+        "%(default)s)",
         type=float,
         default=5.0,
     )
     parser.add_argument(
-        '--debug',
-        action="store_const", dest='log_level',
-        const=logging.DEBUG, default=logging.WARNING,
-        help='enable debug logging',
+        "--debug",
+        action="store_const",
+        dest="log_level",
+        const=logging.DEBUG,
+        default=logging.WARNING,
+        help="enable debug logging",
     )
     args = parser.parse_args(argv)
     return args
@@ -197,7 +214,7 @@ def main(argv=None, services=SERVICES):
 
     if args.timezone:
         timezone = args.timezone
-        print('Using explicitly passed timezone: %s' % timezone)
+        log.debug("Using explicitly passed timezone: %s", timezone)
     else:
         q = Queue()
 
@@ -224,33 +241,33 @@ def main(argv=None, services=SERVICES):
     else:
         link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
         write_debian_timezone(timezone, args.debian_timezone_path)
-        print('Set system timezone to %s.' % timezone)
+        print("Set system timezone to %s." % timezone)
 
 
 class TimezoneUpdateException(Exception):
-    '''
+    """
     Base class for exceptions raised by tzupdate.
-    '''
+    """
 
 
 class TimezoneNotLocallyAvailableError(TimezoneUpdateException):
-    '''
+    """
     Raised when the API returned a timezone, but we don't have it locally.
-    '''
+    """
 
 
 class DirectoryTraversalError(TimezoneUpdateException):
-    '''
+    """
     Raised when the timezone path returned by the API would result in directory
     traversal when concatenated with the zoneinfo path.
-    '''
+    """
 
 
 class TimezoneAcquisitionError(TimezoneUpdateException):
-    '''
-    Raised when a timezone API raises an internal error.
-    '''
+    """
+    Raised when all timezone APIs do not return in a timely manner.
+    """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

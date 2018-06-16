@@ -7,7 +7,8 @@ import errno
 import mock
 from tests._test_utils import (IP_ADDRESSES, FAKE_SERVICES, FAKE_TIMEZONE,
                                setup_basic_api_response)
-from nose.tools import assert_raises, eq_ as eq, assert_true, assert_in
+from nose.tools import (assert_raises, eq_ as eq, assert_true, assert_is_none,
+                        assert_in)
 from nose_parameterized import parameterized
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from, none, one_of, text
@@ -37,10 +38,9 @@ def test_get_timezone_for_ip(ip, service):
 def test_get_timezone_for_ip_empty_resp(ip, service):
     fake_queue = mock.Mock()
     setup_basic_api_response(empty_resp=True)
-    with assert_raises(tzupdate.TimezoneAcquisitionError):
-        tzupdate.get_timezone_for_ip(
+    assert_is_none(tzupdate.get_timezone_for_ip(
             ip=ip, service=service, queue_obj=fake_queue,
-        )
+    ))
 
 
 @httpretty.activate
@@ -50,10 +50,9 @@ def test_get_timezone_for_ip_empty_resp(ip, service):
 def test_get_timezone_for_ip_empty_val(ip, service):
     fake_queue = mock.Mock()
     setup_basic_api_response(empty_val=True)
-    with assert_raises(tzupdate.TimezoneAcquisitionError):
-        tzupdate.get_timezone_for_ip(
+    assert_is_none(tzupdate.get_timezone_for_ip(
             ip=ip, service=service, queue_obj=fake_queue,
-        )
+    ))
 
 
 @mock.patch('tzupdate.os.unlink')
