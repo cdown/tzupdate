@@ -76,9 +76,9 @@ def get_timezone_for_ip(ip, service, queue_obj):
                 msg = get_deep(api_response, service.error_keys)
             except KeyError:
                 pass
-        raise TimezoneAcquisitionError(msg)
-
-    queue_obj.put(tz)
+        log.debug("%s failed: %s", service.url.format(ip=''), msg)
+    else:
+        queue_obj.put(tz)
 
 
 def write_debian_timezone(timezone, debian_timezone_path):
@@ -264,7 +264,7 @@ class DirectoryTraversalError(TimezoneUpdateException):
 
 class TimezoneAcquisitionError(TimezoneUpdateException):
     '''
-    Raised when a timezone API raises an internal error.
+    Raised when all timezone APIs do not return in a timely manner.
     '''
 
 
