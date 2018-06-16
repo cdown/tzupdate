@@ -214,7 +214,7 @@ def main(argv=None, services=SERVICES):
 
     if args.timezone:
         timezone = args.timezone
-        print("Using explicitly passed timezone: %s" % timezone)
+        log.debug("Using explicitly passed timezone: %s", timezone)
     else:
         q = Queue()
 
