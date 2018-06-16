@@ -9,39 +9,33 @@ from hypothesis.strategies import integers, builds
 
 
 IP_ADDRESSES = builds(
-    ipaddress.IPv4Address,
-    integers(min_value=0, max_value=(2**32 - 1))
+    ipaddress.IPv4Address, integers(min_value=0, max_value=(2 ** 32 - 1))
 ).map(str)
 
-FAKE_TIMEZONE = 'Fake/Timezone'
-FAKE_ERROR = 'Virus = very yes'
+FAKE_TIMEZONE = "Fake/Timezone"
+FAKE_ERROR = "Virus = very yes"
 
 FAKE_SERVICES = [
+    tzupdate.GeoIPService("http://example.com/json/{ip}", ("timezone",), ("message",)),
+    tzupdate.GeoIPService("https://doesnotexistreally.com/{ip}", ("time_zone",), None),
     tzupdate.GeoIPService(
-        'http://example.com/json/{ip}', ('timezone',), ('message',),
-    ),
-    tzupdate.GeoIPService(
-        'https://doesnotexistreally.com/{ip}', ('time_zone',), None,
-    ),
-    tzupdate.GeoIPService(
-        'http://tzupdate.com/foo/bar/{ip}', ('location', 'time_zone'),
-        ('msg',),
+        "http://tzupdate.com/foo/bar/{ip}", ("location", "time_zone"), ("msg",)
     ),
 ]
 
 
 def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
-    '''
+    """
     If `empty_resp', we return a totally empty API response, except for any
     error message.
 
     If `empty_val', the tz_key is an empty string.
-    '''
+    """
     if services is None:
         services = FAKE_SERVICES
 
     for service in services:
-        url_regex = re.compile(service.url.format(ip=r'.*'))
+        url_regex = re.compile(service.url.format(ip=r".*"))
         api_body = {}
 
         if not empty_resp:
@@ -50,7 +44,7 @@ def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
             for i, key in enumerate(service.tz_keys, start=1):
                 if i == len(service.tz_keys):
                     if empty_val:
-                        cur_level[key] = ''
+                        cur_level[key] = ""
                     else:
                         cur_level[key] = FAKE_TIMEZONE
                 else:
@@ -66,6 +60,8 @@ def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
                     tmp[key] = tmp.copy()
 
         httpretty.register_uri(
-            httpretty.GET, url_regex,
-            body=json.dumps(api_body), content_type='application/json',
+            httpretty.GET,
+            url_regex,
+            body=json.dumps(api_body),
+            content_type="application/json",
         )
