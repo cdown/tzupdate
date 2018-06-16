@@ -1,6 +1,6 @@
 nose
 hypothesis
 httpretty
-nose-parameterized
+parameterized
 mock
 ipaddress

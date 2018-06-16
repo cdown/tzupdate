@@ -9,7 +9,7 @@ from tests._test_utils import (IP_ADDRESSES, FAKE_SERVICES, FAKE_TIMEZONE,
                                setup_basic_api_response)
 from nose.tools import (assert_raises, eq_ as eq, assert_true, assert_is_none,
                         assert_in)
-from nose_parameterized import parameterized
+from parameterized import parameterized
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from, none, one_of, text
 
