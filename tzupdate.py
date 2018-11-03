@@ -66,7 +66,7 @@ def get_timezone_for_ip(ip, service, queue_obj):
         if not tz:
             raise KeyError
     except KeyError:
-        msg = "Unspecified API error."
+        msg = "Unspecified API error for {}.".format(service.url)
         if service.error_keys is not None:
             try:
                 msg = get_deep(api_response, service.error_keys)
