@@ -18,7 +18,9 @@ matrix:
     # One-off runs
     - python: '3.6'
       env: TOXENV=coverage
-    - python: '3.5'  # 3.6 after https://github.com/PyCQA/pylint/issues/1113
+    - python: '3.6'
+      env: TOXENV=black
+    - python: '3.6'
       env: TOXENV=pylint
 
 # This is required to enable container based Travis CI infrastructure.
