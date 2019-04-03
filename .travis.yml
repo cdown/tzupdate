@@ -1,3 +1,4 @@
+dist: xenial  # needed for python 3.7+
 language: python
 cache: pip
 
@@ -6,6 +7,7 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
+  - '3.7'
 
 install: pip install tox
 
@@ -16,11 +18,11 @@ matrix:
   fast_finish: true
   include:
     # One-off runs
-    - python: '3.6'
+    - python: '3.7'
       env: TOXENV=coverage
-    - python: '3.6'
+    - python: '3.7'
       env: TOXENV=black
-    - python: '3.6'
+    - python: '3.7'
       env: TOXENV=pylint
 
 # This is required to enable container based Travis CI infrastructure.
