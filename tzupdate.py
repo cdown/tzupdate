@@ -56,6 +56,29 @@ def get_deep(item, keys):
     return tmp
 
 
+def get_timezone(ip, timeout=5.0, services=SERVICES):
+    q = Queue()
+
+    threads = [
+        Process(target=get_timezone_for_ip, args=(ip, svc, q)) for svc in services
+    ]
+
+    for t in threads:
+        t.start()
+
+    try:
+        timezone = q.get(block=True, timeout=timeout)
+    except Empty:
+        raise TimezoneAcquisitionError(
+            "No response from any API in {} seconds".format(timeout)
+        )
+    finally:
+        for t in threads:
+            t.terminate()
+
+    return timezone
+
+
 def get_timezone_for_ip(ip, service, queue_obj):
     api_url = service.url.format(ip=ip or "")
     api_response = requests.get(api_url).json()
@@ -215,25 +238,7 @@ def main(argv=None, services=SERVICES):
         timezone = args.timezone
         log.debug("Using explicitly passed timezone: %s", timezone)
     else:
-        q = Queue()
-
-        threads = [
-            Process(target=get_timezone_for_ip, args=(args.ip, svc, q))
-            for svc in services
-        ]
-
-        for t in threads:
-            t.start()
-
-        try:
-            timezone = q.get(block=True, timeout=args.timeout)
-        except Empty:
-            raise TimezoneAcquisitionError(
-                "No response from any API in {} seconds".format(args.timeout)
-            )
-        finally:
-            for t in threads:
-                t.terminate()
+        timezone = get_timezone(args.ip, timeout=args.timeout, services=services)
 
     if args.print_only:
         print(timezone)
