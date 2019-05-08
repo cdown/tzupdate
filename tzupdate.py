@@ -38,9 +38,6 @@ SERVICES = frozenset(
         GeoIPService("http://ip-api.com/json/{ip}", ("timezone",), ("message",)),
         GeoIPService("https://freegeoip.app/json/{ip}", ("time_zone",), None),
         GeoIPService(
-            "http://geoip.nekudo.com/api/{ip}", ("location", "time_zone"), ("msg",)
-        ),
-        GeoIPService(
             "https://timezoneapi.io/api/ip/?{ip}",
             ("data", "timezone", "id"),
             ("meta", "message"),
