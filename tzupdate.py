@@ -70,7 +70,7 @@ def get_timezone(ip, timeout=5.0, services=SERVICES):
         timezone = q.get(block=True, timeout=timeout)
     except Empty:
         raise TimezoneAcquisitionError(
-            "No response from any API in {} seconds".format(timeout)
+            "No usable response from any API in {} seconds".format(timeout)
         )
     finally:
         for t in threads:
@@ -84,7 +84,7 @@ def get_timezone_for_ip(ip, service, queue_obj):
     api_response_obj = requests.get(api_url)
 
     if not api_response_obj.ok:
-        log.debug("%s returned %d, ignoring", api_url, api_response_obj.status_code)
+        log.warning("%s returned %d, ignoring", api_url, api_response_obj.status_code)
         return
 
     api_response = requests.get(api_url).json()
@@ -101,7 +101,7 @@ def get_timezone_for_ip(ip, service, queue_obj):
                 msg = get_deep(api_response, service.error_keys)
             except KeyError:
                 pass
-        log.debug("%s failed: %s", api_url, msg)
+        log.warning("%s failed: %s", api_url, msg)
     else:
         queue_obj.put(tz)
 
