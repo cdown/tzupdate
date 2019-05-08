@@ -2,9 +2,9 @@ dist: xenial  # needed for python 3.7+
 language: python
 cache: pip
 
+# Drop once EOL: https://devguide.python.org/#status-of-python-branches
 python:
   - '2.7'
-  - '3.4'
   - '3.5'
   - '3.6'
   - '3.7'
