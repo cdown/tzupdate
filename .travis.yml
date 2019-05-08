@@ -10,14 +10,11 @@ python:
   - '3.7'
 
 install: pip install tox
-
 script:
   - 'tox'
 
 matrix:
-  fast_finish: true
   include:
-    # One-off runs
     - python: '3.7'
       env: TOXENV=coverage
     - python: '3.7'
