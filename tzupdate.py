@@ -6,15 +6,15 @@ Set the system timezone based on IP geolocation.
 
 from __future__ import print_function
 
+from multiprocessing import Queue, Process
 import argparse
-import os
-import sys
-import requests
+import collections
 import errno
 import logging
-import collections
+import os
+import sys
 
-from multiprocessing import Queue, Process
+import requests
 
 try:
     from queue import Empty
