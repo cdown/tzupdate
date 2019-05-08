@@ -81,6 +81,12 @@ def get_timezone(ip, timeout=5.0, services=SERVICES):
 
 def get_timezone_for_ip(ip, service, queue_obj):
     api_url = service.url.format(ip=ip or "")
+    api_response_obj = requests.get(api_url)
+
+    if not api_response_obj.ok:
+        log.debug("%s returned %d, ignoring", api_url, api_response_obj.status_code)
+        return
+
     api_response = requests.get(api_url).json()
     log.debug("API response from %s: %r", api_url, api_response)
 
