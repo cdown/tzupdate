@@ -21,26 +21,28 @@ tzupdate is a fully automated utility to set the system time using geolocation.
 Usage
 -----
 
-By default, tzupdate will geolocate you, get the timezone for that geolocation,
-and then attempt to link that timezone to ``/etc/localtime``. You can pass
-``-p`` to print the detected timezone without linking. You can also pass ``-a``
-to pass an IP address to use, instead of geolocating you.
-
 ::
 
     $ sudo tzupdate
     Set system timezone to Europe/London.
 
+Internally, this geolocates you, gets the timezone for that geolocation, and
+then updates the system's local time zone.
+
+You can also see what tzupdate would do without actually doing it by passing
+``-p``, and specify an alternative IP address by using ``-a``. This is not an
+exhaustive list of options, see ``tzupdate --help`` for that.
+
 Installation
 ------------
 
-To install the latest stable version from PyPi:
+To install the latest stable version from PyPi (recommended):
 
 .. code::
 
     $ pip install -U tzupdate
 
-To install the latest development version directly from GitHub:
+To install the latest development code from GitHub:
 
 .. code::
 
@@ -51,9 +53,5 @@ Testing
 
 .. code::
 
-    $ pip install tox
     $ tox
-    ..........
-    ----------------------------------------------------------------------
-    Ran 10 tests in 4.088s
-    OK
+    Ran 18 tests in 1.109s
