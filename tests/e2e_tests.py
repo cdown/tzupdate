@@ -49,19 +49,16 @@ def test_explicit_paths(link_localtime_mock, deb_tz_mock):
     deb_tz_mock.assert_called_once_with(FAKE_TIMEZONE, deb_path)
 
 
-@httpretty.activate
 @mock.patch("tzupdate.write_debian_timezone")
 @mock.patch("tzupdate.link_localtime")
-def test_explicit_ip(_unused_ll, _unused_deb):
-    setup_basic_api_response()
+@mock.patch("tzupdate.get_timezone")
+def test_explicit_ip(get_timezone_mock, _unused_ll, _unused_deb):
     ip_addr = "1.2.3.4"
     args = ["-a", ip_addr]
     tzupdate.main(args, services=FAKE_SERVICES)
-
-    # TODO (#16): httpretty.last_request() and
-    # get_timezone_for_ip.assert_called_once_with don't work for testing here
-    # because of the threading we use. We need to work out a good solution for
-    # this in
+    get_timezone_mock.assert_called_once_with(
+        ip_addr, timeout=mock.ANY, services=FAKE_SERVICES
+    )
 
 
 @mock.patch("tzupdate.write_debian_timezone")
