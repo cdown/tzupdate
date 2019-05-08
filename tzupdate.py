@@ -101,7 +101,7 @@ def get_timezone_for_ip(ip, service, queue_obj):
                 msg = get_deep(api_response, service.error_keys)
             except KeyError:
                 pass
-        log.debug("%s failed: %s", service.url.format(ip=""), msg)
+        log.debug("%s failed: %s", api_url, msg)
     else:
         queue_obj.put(tz)
 
