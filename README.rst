@@ -1,8 +1,12 @@
-|travis| |coveralls| |libraries|
+|travis| |lgtm| |coveralls| |libraries|
 
 .. |travis| image:: https://img.shields.io/travis/cdown/tzupdate/develop.svg?label=tests
   :target: https://travis-ci.org/cdown/tzupdate
   :alt: Tests
+
+.. |lgtm| image:: https://img.shields.io/lgtm/grade/python/github/cdown/tzupdate.svg?label=code%20quality
+  :target: https://lgtm.com/projects/g/cdown/tzupdate/overview/
+  :alt: LGTM
 
 .. |coveralls| image:: https://img.shields.io/coveralls/cdown/tzupdate/develop.svg?label=test%20coverage
   :target: https://coveralls.io/github/cdown/tzupdate?branch=develop
