@@ -24,7 +24,9 @@ FAKE_SERVICES = [
 ]
 
 
-def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
+def setup_basic_api_response(
+    services=None, empty_resp=False, empty_val=False, status=200
+):
     """
     If `empty_resp', we return a totally empty API response, except for any
     error message.
@@ -64,4 +66,5 @@ def setup_basic_api_response(services=None, empty_resp=False, empty_val=False):
             url_regex,
             body=json.dumps(api_body),
             content_type="application/json",
+            status=status,
         )

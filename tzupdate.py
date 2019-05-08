@@ -6,15 +6,15 @@ Set the system timezone based on IP geolocation.
 
 from __future__ import print_function
 
+from multiprocessing import Queue, Process
 import argparse
-import os
-import sys
-import requests
+import collections
 import errno
 import logging
-import collections
+import os
+import sys
 
-from multiprocessing import Queue, Process
+import requests
 
 try:
     from queue import Empty
@@ -37,9 +37,8 @@ SERVICES = frozenset(
     [
         GeoIPService("http://ip-api.com/json/{ip}", ("timezone",), ("message",)),
         GeoIPService("https://freegeoip.app/json/{ip}", ("time_zone",), None),
-        GeoIPService(
-            "http://geoip.nekudo.com/api/{ip}", ("location", "time_zone"), ("msg",)
-        ),
+        GeoIPService("https://ipapi.co/{ip}/json/", ("timezone",), ("reason",)),
+        GeoIPService("http://worldtimeapi.org/api/ip/{ip}", ("timezone",), ("error",)),
         GeoIPService(
             "https://timezoneapi.io/api/ip/?{ip}",
             ("data", "timezone", "id"),
@@ -56,8 +55,37 @@ def get_deep(item, keys):
     return tmp
 
 
+def get_timezone(ip, timeout=5.0, services=SERVICES):
+    q = Queue()
+
+    threads = [
+        Process(target=get_timezone_for_ip, args=(ip, svc, q)) for svc in services
+    ]
+
+    for t in threads:
+        t.start()
+
+    try:
+        timezone = q.get(block=True, timeout=timeout)
+    except Empty:
+        raise TimezoneAcquisitionError(
+            "No usable response from any API in {} seconds".format(timeout)
+        )
+    finally:
+        for t in threads:
+            t.terminate()
+
+    return timezone
+
+
 def get_timezone_for_ip(ip, service, queue_obj):
     api_url = service.url.format(ip=ip or "")
+    api_response_obj = requests.get(api_url)
+
+    if not api_response_obj.ok:
+        log.warning("%s returned %d, ignoring", api_url, api_response_obj.status_code)
+        return
+
     api_response = requests.get(api_url).json()
     log.debug("API response from %s: %r", api_url, api_response)
 
@@ -72,7 +100,7 @@ def get_timezone_for_ip(ip, service, queue_obj):
                 msg = get_deep(api_response, service.error_keys)
             except KeyError:
                 pass
-        log.debug("%s failed: %s", service.url.format(ip=""), msg)
+        log.warning("%s failed: %s", api_url, msg)
     else:
         queue_obj.put(tz)
 
@@ -142,7 +170,7 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
                 'Could not link "%s" (%s). Are you root?'
                 % (localtime_path, thrown_exc),
             )
-        elif thrown_exc.errno != errno.ENOENT:
+        if thrown_exc.errno != errno.ENOENT:
             raise
 
     os.symlink(zoneinfo_tz_path, localtime_path)
@@ -215,25 +243,7 @@ def main(argv=None, services=SERVICES):
         timezone = args.timezone
         log.debug("Using explicitly passed timezone: %s", timezone)
     else:
-        q = Queue()
-
-        threads = [
-            Process(target=get_timezone_for_ip, args=(args.ip, svc, q))
-            for svc in services
-        ]
-
-        for t in threads:
-            t.start()
-
-        try:
-            timezone = q.get(block=True, timeout=args.timeout)
-        except Empty:
-            raise TimezoneAcquisitionError(
-                "No response from any API in {} seconds".format(args.timeout)
-            )
-        finally:
-            for t in threads:
-                t.terminate()
+        timezone = get_timezone(args.ip, timeout=args.timeout, services=services)
 
     if args.print_only:
         print(timezone)

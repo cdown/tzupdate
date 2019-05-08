@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import tzupdate
 import httpretty
@@ -14,7 +14,10 @@ from tests._test_utils import (
 from nose.tools import assert_raises, eq_ as eq, assert_true, assert_is_none, assert_in
 from parameterized import parameterized
 from hypothesis import given, settings
-from hypothesis.strategies import sampled_from, none, one_of, text
+from hypothesis.strategies import sampled_from, none, one_of, text, integers
+
+
+ERROR_STATUSES = [s for s in httpretty.http.STATUSES if 400 <= s <= 599]
 
 
 @httpretty.activate
@@ -48,6 +51,21 @@ def test_get_timezone_for_ip_empty_resp(ip, service):
 def test_get_timezone_for_ip_empty_val(ip, service):
     fake_queue = mock.Mock()
     setup_basic_api_response(empty_val=True)
+    assert_is_none(
+        tzupdate.get_timezone_for_ip(ip=ip, service=service, queue_obj=fake_queue)
+    )
+
+
+@httpretty.activate
+@given(
+    one_of(IP_ADDRESSES, none()),
+    sampled_from(FAKE_SERVICES),
+    sampled_from(ERROR_STATUSES),
+)
+@settings(max_examples=20)
+def test_get_timezone_for_ip_doesnt_raise(ip, service, status):
+    fake_queue = mock.Mock()
+    setup_basic_api_response(status=status)
     assert_is_none(
         tzupdate.get_timezone_for_ip(ip=ip, service=service, queue_obj=fake_queue)
     )

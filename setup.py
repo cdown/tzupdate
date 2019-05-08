@@ -11,7 +11,7 @@ with open("requirements.txt") as requirements_f:
 
 setup(
     name="tzupdate",
-    version="1.3.1",
+    version="1.4.0",
     description="Set the system timezone based on IP geolocation",
     long_description=README,
     url="https://github.com/cdown/tzupdate",
@@ -23,7 +23,7 @@ setup(
     entry_points={"console_scripts": ["tzupdate=tzupdate:main"]},
     keywords="timezone localtime tz",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "License :: Public Domain",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
