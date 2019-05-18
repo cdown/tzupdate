@@ -16,4 +16,4 @@ matrix:
   include:
     # "coverage" toxenv runs tests, so no need to run TOXENV=py37
     - python: '3.7'
-      env: TOXENV=black,pylint,pytype,coverage
+      env: TOXENV=black,pylint,pytype,bandit,coverage
