@@ -33,6 +33,12 @@ You can also see what tzupdate would do without actually doing it by passing
 ``-p``, and specify an alternative IP address by using ``-a``. This is not an
 exhaustive list of options, see ``tzupdate --help`` for that.
 
+The ``contrib/09-timezone`` script can be place in the
+``/etc/NetworkManager/dispatcher.d/`` folder. This script will automatically
+launch tzupdate upon network connection. The user will therefore be prompted to
+change the system timezone whenever the system connects to a network in a
+different timezone.
+
 Installation
 ------------
 

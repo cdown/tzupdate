@@ -1,0 +1,44 @@
+#!/bin/sh
+
+if [ "$2" == "up" ]; then
+    TIMEZONE=$(tzupdate -p)
+    SYS_TZ=$(tzupdate --print-sys)
+
+    if [[ "$TIMEZONE" == "$SYS_TZ" ]]; then
+        echo "Timezone unchanged"
+        exit
+    fi
+
+    GDBUS_ARGS="--session
+          --dest org.freedesktop.Notifications
+          --object-path /org/freedesktop/Notifications"
+    NOTIFY_METHOD="--method org.freedesktop.Notifications.Notify"
+    SEND_NOTIF="gdbus call $GDBUS_ARGS $NOTIFY_METHOD tzupdate 0 '' 'Change timezone
+        to $TIMEZONE ?' '' '[\"changetz\", \"Yes\"]' '{\"urgency\": <byte 1>}'
+        'int32 -1'"
+    RECIEVE_ACTION="gdbus monitor $GDBUS_ARGS"
+    NOTIF_REGEXP='^\/org\/freedesktop\/Notifications: org.freedesktop.Notifications.\(.*\)$'
+
+    GDBUS_MONITOR_PID=$(mktemp)
+
+    USER=$(who | awk -v vt=tty$(fgconsole) '$0 ~ vt {print $1}')
+    export DISPLAY=$(w --from $USER | awk -F '  +' 'END{print $2}')
+    export XAUTHORITY=$(eval echo ~$USER/.Xauthority)
+    eval $(dbus-launch --auto-syntax)
+
+    NOTIFICATION_ID=$(eval $SEND_NOTIF | sed 's/(uint32 \([0-9]\+\),)/\1/g')
+
+    ( $RECIEVE_ACTION & echo $! >&3 ) 3>"$GDBUS_MONITOR_PID" | while read -r signal
+    do
+        recv="$(sed "s/$NOTIF_REGEXP/\\1/" <<< "$signal")"
+        if grep "NotificationClosed (uint32 $NOTIFICATION_ID, uint32 [0-9]\+)" <<< "$recv" &> /dev/null; then
+            break
+        fi
+        if [[ "$recv" == "ActionInvoked (uint32 $NOTIFICATION_ID, 'changetz')" ]]; then
+            tzupdate -t "$TIMEZONE"
+            break
+        fi
+    done
+    kill $(<"$GDBUS_MONITOR_PID")
+    rm -f $GDBUS_MONITOR_PID
+fi
