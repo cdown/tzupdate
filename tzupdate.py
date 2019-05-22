@@ -177,9 +177,12 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
 
     return zoneinfo_tz_path
 
+
 def get_sys_timezone(zoneinfo_abspath, localtime_abspath):
-    return localtime_abspath.replace(os.path.commonpath(
-        [zoneinfo_abspath, localtime_abspath]) + '/', '', 1)
+    return localtime_abspath.replace(
+        os.path.commonpath([zoneinfo_abspath, localtime_abspath]) + "/", "", 1
+    )
+
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
@@ -248,8 +251,12 @@ def main(argv=None, services=SERVICES):
     logging.basicConfig(level=args.log_level)
 
     if args.print_system_timezone:
-        print(get_sys_timezone(os.path.realpath(args.zoneinfo_path),
-                               os.path.realpath(args.localtime_path)))
+        print(
+            get_sys_timezone(
+                os.path.realpath(args.zoneinfo_path),
+                os.path.realpath(args.localtime_path),
+            )
+        )
         return
 
     if args.timezone:
