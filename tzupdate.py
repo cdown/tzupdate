@@ -179,7 +179,9 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
 
 
 def get_sys_timezone(zoneinfo_abspath, localtime_abspath):
-    return localtime_abspath.replace(zoneinfo_abspath + os.path.sep, "", 1)
+    return localtime_abspath.replace(
+        os.path.commonprefix([zoneinfo_abspath, localtime_abspath]) + os.path.sep, "", 1
+    )
 
 
 def parse_args(argv):
