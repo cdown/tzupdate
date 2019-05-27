@@ -9,6 +9,7 @@ from tests._test_utils import (
     IP_ADDRESSES,
     FAKE_SERVICES,
     FAKE_TIMEZONE,
+    FAKE_ZONEINFO_PATH,
     setup_basic_api_response,
 )
 from nose.tools import assert_raises, eq_ as eq, assert_true, assert_is_none, assert_in
@@ -32,6 +33,13 @@ def test_get_timezone_for_ip(ip, service):
         assert_in(ip, httpretty.last_request().path)
 
     fake_queue.put.assert_called_once_with(FAKE_TIMEZONE)
+
+
+def test_get_sys_timezone():
+    systz = tzupdate.get_sys_timezone(
+        FAKE_ZONEINFO_PATH, FAKE_ZONEINFO_PATH + "/" + FAKE_TIMEZONE
+    )
+    assert systz == FAKE_TIMEZONE
 
 
 @httpretty.activate

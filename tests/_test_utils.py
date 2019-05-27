@@ -13,6 +13,7 @@ IP_ADDRESSES = builds(
 ).map(str)
 
 FAKE_TIMEZONE = "Fake/Timezone"
+FAKE_ZONEINFO_PATH = "/path/to/zoneinfo"
 FAKE_ERROR = "Virus = very yes"
 
 FAKE_SERVICES = [
