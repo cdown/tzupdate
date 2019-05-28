@@ -33,11 +33,9 @@ def test_print_only_no_link(link_localtime_mock, deb_tz_mock):
     assert_false(deb_tz_mock.called)
 
 
-@httpretty.activate
 @mock.patch("tzupdate.write_debian_timezone")
 @mock.patch("tzupdate.link_localtime")
 def test_print_sys_tz_no_link(link_localtime_mock, deb_tz_mock):
-    setup_basic_api_response()
     args = ["--print-system-timezone"]
     tzupdate.main(args, services=FAKE_SERVICES)
     assert_false(link_localtime_mock.called)
