@@ -178,6 +178,12 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
     return zoneinfo_tz_path
 
 
+def get_sys_timezone(zoneinfo_abspath, localtime_abspath):
+    return localtime_abspath.replace(
+        os.path.commonprefix([zoneinfo_abspath, localtime_abspath]) + os.path.sep, "", 1
+    )
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -185,6 +191,11 @@ def parse_args(argv):
         "--print-only",
         action="store_true",
         help="print the timezone, but don't update the localtime file",
+    )
+    parser.add_argument(
+        "--print-system-timezone",
+        action="store_true",
+        help="print the current system timezone",
     )
     parser.add_argument(
         "-a", "--ip", help="use this IP instead of automatically detecting it"
@@ -238,6 +249,15 @@ def main(argv=None, services=SERVICES):
 
     args = parse_args(argv)
     logging.basicConfig(level=args.log_level)
+
+    if args.print_system_timezone:
+        print(
+            get_sys_timezone(
+                os.path.realpath(args.zoneinfo_path),
+                os.path.realpath(args.localtime_path),
+            )
+        )
+        return
 
     if args.timezone:
         timezone = args.timezone
