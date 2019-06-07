@@ -18,7 +18,7 @@ def test_end_to_end_no_args(link_localtime_mock, deb_tz_mock):
         FAKE_TIMEZONE, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
     )
     deb_tz_mock.assert_called_once_with(
-        FAKE_TIMEZONE, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH
+        FAKE_TIMEZONE, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH, True
     )
 
 
@@ -55,7 +55,7 @@ def test_explicit_paths(link_localtime_mock, deb_tz_mock):
     link_localtime_mock.assert_called_once_with(
         FAKE_TIMEZONE, zoneinfo_path, localtime_path
     )
-    deb_tz_mock.assert_called_once_with(FAKE_TIMEZONE, deb_path)
+    deb_tz_mock.assert_called_once_with(FAKE_TIMEZONE, deb_path, True)
 
 
 @mock.patch("tzupdate.write_debian_timezone")
@@ -79,7 +79,9 @@ def test_explicit_timezone(link_localtime_mock, deb_tz_mock):
     link_localtime_mock.assert_called_once_with(
         timezone, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
     )
-    deb_tz_mock.assert_called_once_with(timezone, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH)
+    deb_tz_mock.assert_called_once_with(
+        timezone, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH, True
+    )
 
 
 @httpretty.activate

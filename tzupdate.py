@@ -105,16 +105,29 @@ def get_timezone_for_ip(ip, service, queue_obj):
         queue_obj.put(tz)
 
 
-def write_debian_timezone(timezone, debian_timezone_path):
+def write_debian_timezone(timezone, debian_timezone_path, must_exist=True):
     """
     Debian and derivatives also have /etc/timezone, which is used for a human
     readable timezone. Without this, dpkg-reconfigure will nuke /etc/localtime
     on reconfigure.
+
+    If must_exist is True, we won't create debian_timezone_path if it doesn't
+    already exist.
     """
     old_umask = os.umask(0o133)
+    mode = "w"
+
+    if must_exist:
+        mode = "r+"
+
     try:
-        with open(debian_timezone_path, "w") as debian_tz_f:
+        with open(debian_timezone_path, mode) as debian_tz_f:
+            debian_tz_f.seek(0)
             debian_tz_f.write(timezone + "\n")
+    except OSError as thrown_exc:
+        if must_exist and thrown_exc.errno == errno.ENOENT:
+            return
+        raise
     finally:
         os.umask(old_umask)
 
@@ -224,6 +237,12 @@ def parse_args(argv):
         help="path to Debian timezone name file (default: %(default)s)",
     )
     parser.add_argument(
+        "--always-write-debian-timezone",
+        action="store_false",
+        dest="debian_tz_must_exist",
+        help="create debian timezone file even if it doesn't exist (default: %(default)s)",
+    )
+    parser.add_argument(
         "-s",
         "--timeout",
         help="maximum number of seconds to wait for APIs to return (default: "
@@ -269,7 +288,9 @@ def main(argv=None, services=SERVICES):
         print(timezone)
     else:
         link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
-        write_debian_timezone(timezone, args.debian_timezone_path)
+        write_debian_timezone(
+            timezone, args.debian_timezone_path, args.debian_tz_must_exist
+        )
         print("Set system timezone to %s." % timezone)
 
 
