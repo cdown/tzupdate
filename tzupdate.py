@@ -238,8 +238,7 @@ def parse_args(argv):
     )
     parser.add_argument(
         "--always-write-debian-timezone",
-        action="store_false",
-        dest="debian_tz_must_exist",
+        action="store_true",
         help="create debian timezone file even if it doesn't exist (default: %(default)s)",
     )
     parser.add_argument(
@@ -289,7 +288,7 @@ def main(argv=None, services=SERVICES):
     else:
         link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
         write_debian_timezone(
-            timezone, args.debian_timezone_path, args.debian_tz_must_exist
+            timezone, args.debian_timezone_path, not args.always_write_debian_timezone
         )
         print("Set system timezone to %s." % timezone)
 
