@@ -9,9 +9,17 @@ from tests._test_utils import (
     IP_ADDRESSES,
     FAKE_SERVICES,
     FAKE_TIMEZONE,
+    FAKE_ZONEINFO_PATH,
     setup_basic_api_response,
 )
-from nose.tools import assert_raises, eq_ as eq, assert_true, assert_is_none, assert_in
+from nose.tools import (
+    assert_raises,
+    eq_ as eq,
+    assert_true,
+    assert_is_none,
+    assert_in,
+    assert_false,
+)
 from parameterized import parameterized
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from, none, one_of, text, integers
@@ -32,6 +40,13 @@ def test_get_timezone_for_ip(ip, service):
         assert_in(ip, httpretty.last_request().path)
 
     fake_queue.put.assert_called_once_with(FAKE_TIMEZONE)
+
+
+def test_get_sys_timezone():
+    systz = tzupdate.get_sys_timezone(
+        FAKE_ZONEINFO_PATH, FAKE_ZONEINFO_PATH + "/" + FAKE_TIMEZONE
+    )
+    assert systz == FAKE_TIMEZONE
 
 
 @httpretty.activate
@@ -161,9 +176,43 @@ def test_link_localtime_localtime_missing_no_raise(
 
 @given(text(), text())
 @settings(max_examples=20)
-def test_debian_tz_path(timezone, tz_path):
+def test_debian_tz_path_exists_not_forced(timezone, tz_path):
     mo = mock.mock_open()
     with mock.patch("tzupdate.open", mo, create=True):
-        tzupdate.write_debian_timezone(timezone, tz_path)
+        tzupdate.write_debian_timezone(timezone, tz_path, must_exist=True)
+        mo.assert_called_once_with(tz_path, "r+")
+        mo().seek.assert_called_once_with(0)
+        mo().write.assert_called_once_with(timezone + "\n")
+
+
+@given(text(), text())
+@settings(max_examples=20)
+def test_debian_tz_path_doesnt_exist_not_forced(timezone, tz_path):
+    mo = mock.mock_open()
+    mo.side_effect = OSError(errno.ENOENT, "")
+    with mock.patch("tzupdate.open", mo, create=True):
+        tzupdate.write_debian_timezone(timezone, tz_path, must_exist=True)
+        mo.assert_called_once_with(tz_path, "r+")
+
+
+@given(text(), text())
+@settings(max_examples=20)
+def test_debian_tz_path_other_error_raises(timezone, tz_path):
+    mo = mock.mock_open()
+    code = errno.EPERM
+    mo.side_effect = OSError(code, "")
+    with mock.patch("tzupdate.open", mo, create=True):
+        with assert_raises(OSError) as thrown_exc:
+            tzupdate.write_debian_timezone(timezone, tz_path, must_exist=True)
+        eq(thrown_exc.exception.errno, code)
+
+
+@given(text(), text())
+@settings(max_examples=20)
+def test_debian_tz_path_doesnt_exist_forced(timezone, tz_path):
+    mo = mock.mock_open()
+    with mock.patch("tzupdate.open", mo, create=True):
+        tzupdate.write_debian_timezone(timezone, tz_path, must_exist=False)
         mo.assert_called_once_with(tz_path, "w")
+        mo().seek.assert_called_once_with(0)
         mo().write.assert_called_once_with(timezone + "\n")

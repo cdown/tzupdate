@@ -18,7 +18,7 @@ def test_end_to_end_no_args(link_localtime_mock, deb_tz_mock):
         FAKE_TIMEZONE, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
     )
     deb_tz_mock.assert_called_once_with(
-        FAKE_TIMEZONE, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH
+        FAKE_TIMEZONE, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH, True
     )
 
 
@@ -28,6 +28,15 @@ def test_end_to_end_no_args(link_localtime_mock, deb_tz_mock):
 def test_print_only_no_link(link_localtime_mock, deb_tz_mock):
     setup_basic_api_response()
     args = ["-p"]
+    tzupdate.main(args, services=FAKE_SERVICES)
+    assert_false(link_localtime_mock.called)
+    assert_false(deb_tz_mock.called)
+
+
+@mock.patch("tzupdate.write_debian_timezone")
+@mock.patch("tzupdate.link_localtime")
+def test_print_sys_tz_no_link(link_localtime_mock, deb_tz_mock):
+    args = ["--print-system-timezone"]
     tzupdate.main(args, services=FAKE_SERVICES)
     assert_false(link_localtime_mock.called)
     assert_false(deb_tz_mock.called)
@@ -46,22 +55,19 @@ def test_explicit_paths(link_localtime_mock, deb_tz_mock):
     link_localtime_mock.assert_called_once_with(
         FAKE_TIMEZONE, zoneinfo_path, localtime_path
     )
-    deb_tz_mock.assert_called_once_with(FAKE_TIMEZONE, deb_path)
+    deb_tz_mock.assert_called_once_with(FAKE_TIMEZONE, deb_path, True)
 
 
-@httpretty.activate
 @mock.patch("tzupdate.write_debian_timezone")
 @mock.patch("tzupdate.link_localtime")
-def test_explicit_ip(_unused_ll, _unused_deb):
-    setup_basic_api_response()
+@mock.patch("tzupdate.get_timezone")
+def test_explicit_ip(get_timezone_mock, _unused_ll, _unused_deb):
     ip_addr = "1.2.3.4"
     args = ["-a", ip_addr]
     tzupdate.main(args, services=FAKE_SERVICES)
-
-    # TODO (#16): httpretty.last_request() and
-    # get_timezone_for_ip.assert_called_once_with don't work for testing here
-    # because of the threading we use. We need to work out a good solution for
-    # this in
+    get_timezone_mock.assert_called_once_with(
+        ip_addr, timeout=mock.ANY, services=FAKE_SERVICES
+    )
 
 
 @mock.patch("tzupdate.write_debian_timezone")
@@ -73,7 +79,9 @@ def test_explicit_timezone(link_localtime_mock, deb_tz_mock):
     link_localtime_mock.assert_called_once_with(
         timezone, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
     )
-    deb_tz_mock.assert_called_once_with(timezone, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH)
+    deb_tz_mock.assert_called_once_with(
+        timezone, tzupdate.DEFAULT_DEBIAN_TIMEZONE_PATH, True
+    )
 
 
 @httpretty.activate

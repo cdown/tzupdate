@@ -39,11 +39,6 @@ SERVICES = frozenset(
         GeoIPService("https://freegeoip.app/json/{ip}", ("time_zone",), None),
         GeoIPService("https://ipapi.co/{ip}/json/", ("timezone",), ("reason",)),
         GeoIPService("http://worldtimeapi.org/api/ip/{ip}", ("timezone",), ("error",)),
-        GeoIPService(
-            "https://timezoneapi.io/api/ip/?{ip}",
-            ("data", "timezone", "id"),
-            ("meta", "message"),
-        ),
     ]
 )
 
@@ -105,16 +100,29 @@ def get_timezone_for_ip(ip, service, queue_obj):
         queue_obj.put(tz)
 
 
-def write_debian_timezone(timezone, debian_timezone_path):
+def write_debian_timezone(timezone, debian_timezone_path, must_exist=True):
     """
     Debian and derivatives also have /etc/timezone, which is used for a human
     readable timezone. Without this, dpkg-reconfigure will nuke /etc/localtime
     on reconfigure.
+
+    If must_exist is True, we won't create debian_timezone_path if it doesn't
+    already exist.
     """
     old_umask = os.umask(0o133)
+    mode = "w"
+
+    if must_exist:
+        mode = "r+"
+
     try:
-        with open(debian_timezone_path, "w") as debian_tz_f:
+        with open(debian_timezone_path, mode) as debian_tz_f:
+            debian_tz_f.seek(0)
             debian_tz_f.write(timezone + "\n")
+    except OSError as thrown_exc:
+        if must_exist and thrown_exc.errno == errno.ENOENT:
+            return
+        raise
     finally:
         os.umask(old_umask)
 
@@ -178,6 +186,12 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
     return zoneinfo_tz_path
 
 
+def get_sys_timezone(zoneinfo_abspath, localtime_abspath):
+    return localtime_abspath.replace(
+        os.path.commonprefix([zoneinfo_abspath, localtime_abspath]) + os.path.sep, "", 1
+    )
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -185,6 +199,11 @@ def parse_args(argv):
         "--print-only",
         action="store_true",
         help="print the timezone, but don't update the localtime file",
+    )
+    parser.add_argument(
+        "--print-system-timezone",
+        action="store_true",
+        help="print the current system timezone",
     )
     parser.add_argument(
         "-a", "--ip", help="use this IP instead of automatically detecting it"
@@ -213,6 +232,11 @@ def parse_args(argv):
         help="path to Debian timezone name file (default: %(default)s)",
     )
     parser.add_argument(
+        "--always-write-debian-timezone",
+        action="store_true",
+        help="create debian timezone file even if it doesn't exist (default: %(default)s)",
+    )
+    parser.add_argument(
         "-s",
         "--timeout",
         help="maximum number of seconds to wait for APIs to return (default: "
@@ -239,6 +263,15 @@ def main(argv=None, services=SERVICES):
     args = parse_args(argv)
     logging.basicConfig(level=args.log_level)
 
+    if args.print_system_timezone:
+        print(
+            get_sys_timezone(
+                os.path.realpath(args.zoneinfo_path),
+                os.path.realpath(args.localtime_path),
+            )
+        )
+        return
+
     if args.timezone:
         timezone = args.timezone
         log.debug("Using explicitly passed timezone: %s", timezone)
@@ -249,7 +282,9 @@ def main(argv=None, services=SERVICES):
         print(timezone)
     else:
         link_localtime(timezone, args.zoneinfo_path, args.localtime_path)
-        write_debian_timezone(timezone, args.debian_timezone_path)
+        write_debian_timezone(
+            timezone, args.debian_timezone_path, not args.always_write_debian_timezone
+        )
         print("Set system timezone to %s." % timezone)
 
 
