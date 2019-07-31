@@ -39,11 +39,6 @@ SERVICES = frozenset(
         GeoIPService("https://freegeoip.app/json/{ip}", ("time_zone",), None),
         GeoIPService("https://ipapi.co/{ip}/json/", ("timezone",), ("reason",)),
         GeoIPService("http://worldtimeapi.org/api/ip/{ip}", ("timezone",), ("error",)),
-        GeoIPService(
-            "https://timezoneapi.io/api/ip/?{ip}",
-            ("data", "timezone", "id"),
-            ("meta", "message"),
-        ),
     ]
 )
 
