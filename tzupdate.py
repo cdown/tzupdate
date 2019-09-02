@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 DEFAULT_ZONEINFO_PATH = "/usr/share/zoneinfo"
 DEFAULT_LOCALTIME_PATH = "/etc/localtime"
 DEFAULT_DEBIAN_TIMEZONE_PATH = "/etc/timezone"
+DEFAULT_HTTP_TIMEOUT = 30.0
 
 
 # url: A url with an "ip" key to be replaced with an optional IP
@@ -50,7 +51,7 @@ def get_deep(item, keys):
     return tmp
 
 
-def get_timezone(ip, timeout=5.0, services=SERVICES):
+def get_timezone(ip, timeout=DEFAULT_HTTP_TIMEOUT, services=SERVICES):
     q = Queue()
 
     threads = [
@@ -242,7 +243,7 @@ def parse_args(argv):
         help="maximum number of seconds to wait for APIs to return (default: "
         "%(default)s)",
         type=float,
-        default=5.0,
+        default=DEFAULT_HTTP_TIMEOUT,
     )
     parser.add_argument(
         "--debug",
