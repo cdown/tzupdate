@@ -7,10 +7,14 @@ import re
 import ipaddress
 from hypothesis.strategies import integers, builds
 
+try:
+    _ipa_type = unicode  # pytype: disable=name-error
+except NameError:
+    _ipa_type = str
 
 IP_ADDRESSES = builds(
     ipaddress.IPv4Address, integers(min_value=0, max_value=(2 ** 32 - 1))
-).map(str)
+).map(_ipa_type)
 
 FAKE_TIMEZONE = "Fake/Timezone"
 FAKE_ZONEINFO_PATH = "/path/to/zoneinfo"

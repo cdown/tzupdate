@@ -6,9 +6,6 @@ from setuptools import setup
 with open("README.rst") as readme_f:
     README = readme_f.read()
 
-with open("requirements.txt") as requirements_f:
-    REQUIREMENTS = requirements_f.readlines()
-
 setup(
     name="tzupdate",
     version="1.5.0",
@@ -19,7 +16,6 @@ setup(
     author="Chris Down",
     author_email="chris@chrisdown.name",
     py_modules=["tzupdate"],
-    install_requires=REQUIREMENTS,
     entry_points={"console_scripts": ["tzupdate=tzupdate:main"]},
     keywords="timezone localtime tz",
     classifiers=[

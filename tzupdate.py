@@ -11,15 +11,17 @@ import argparse
 import collections
 import errno
 import logging
+import json
 import os
 import sys
 
-import requests
-
 try:
     from queue import Empty
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
 except ImportError:  # Python 2 fallback
     from Queue import Empty
+    from urllib2 import urlopen, HTTPError
 
 log = logging.getLogger(__name__)
 
@@ -76,13 +78,17 @@ def get_timezone(ip, timeout=DEFAULT_HTTP_TIMEOUT, services=SERVICES):
 
 def get_timezone_for_ip(ip, service, queue_obj):
     api_url = service.url.format(ip=ip or "")
-    api_response_obj = requests.get(api_url)
 
-    if not api_response_obj.ok:
-        log.warning("%s returned %d, ignoring", api_url, api_response_obj.status_code)
+    try:
+        # The caller is responsible for providing a service string which
+        # doesn't permit walking file: URIs or whatever, so silence bandit's
+        # warning about that
+        api_response_obj = urlopen(api_url)  # nosec
+    except HTTPError as thrown_exc:
+        log.warning("%s returned %d, ignoring", api_url, thrown_exc.code)
         return
 
-    api_response = api_response_obj.json()
+    api_response = json.loads(api_response_obj.read().decode("utf8"))
     log.debug("API response from %s: %r", api_url, api_response)
 
     try:
