@@ -1,6 +1,6 @@
-nose
-hypothesis
-httpretty
-parameterized
-mock
-ipaddress
+nose>=1,<2
+hypothesis>=4,<5
+httpretty>=0.9,<0.10
+parameterized>=0.7,<0.8
+mock>=3,<4
+ipaddress>=1,<2
