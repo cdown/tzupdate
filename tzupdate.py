@@ -262,7 +262,7 @@ def parse_args(argv):
 
 
 def main(argv=None, services=SERVICES):
-    if argv is None:
+    if argv is None:  # pragma: no cover
         argv = sys.argv[1:]
 
     args = parse_args(argv)
@@ -318,5 +318,5 @@ class TimezoneAcquisitionError(TimezoneUpdateException):
     """
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
