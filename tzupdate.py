@@ -15,13 +15,9 @@ import json
 import os
 import sys
 
-try:
-    from queue import Empty
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-except ImportError:  # Python 2 fallback
-    from Queue import Empty
-    from urllib2 import urlopen, HTTPError
+from queue import Empty
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 log = logging.getLogger(__name__)
 
