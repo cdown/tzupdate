@@ -156,7 +156,7 @@ def check_directory_traversal(base_dir, requested_path):
 
 def link_localtime(timezone, zoneinfo_path, localtime_path):
     """
-    Link a timezone file from the zoneinfo database to /etc/localtime.
+    Atomically link a timezone file from zoneinfo to localtime_path.
 
     Since we may be retrieving the timezone file's relative path from an
     untrusted source, we also do checks to make sure that no directory
@@ -172,21 +172,30 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
             "your operating system." % timezone
         )
 
+    localtime_temp_path = localtime_path + "~"
+
     try:
-        os.unlink(localtime_path)
+        os.symlink(zoneinfo_tz_path, localtime_temp_path)
     except OSError as thrown_exc:
-        # If we don't have permission to unlink /etc/localtime, we probably
-        # need to be root.
         if thrown_exc.errno == errno.EACCES:
             raise OSError(
                 thrown_exc.errno,
                 'Could not link "%s" (%s). Are you root?'
-                % (localtime_path, thrown_exc),
+                % (localtime_temp_path, thrown_exc),
             )
-        if thrown_exc.errno != errno.ENOENT:
-            raise
+        raise
 
-    os.symlink(zoneinfo_tz_path, localtime_path)
+    # To be atomic, these need to be on the same device.
+    if (
+        os.path.exists(localtime_path)
+        and os.stat(localtime_temp_path).st_dev != os.stat(localtime_path).st_dev
+    ):
+        raise TimezoneUpdateException(
+            "%s and %s are not on the same device"
+            % (localtime_path, localtime_temp_path)
+        )
+
+    os.replace(localtime_temp_path, localtime_path)
 
     return zoneinfo_tz_path
 

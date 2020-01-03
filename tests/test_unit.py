@@ -84,19 +84,81 @@ def test_get_timezone_for_ip_doesnt_raise(ip, service, status):
     )
 
 
-@mock.patch("tzupdate.os.unlink")
+@mock.patch("tzupdate.os.replace")
 @mock.patch("tzupdate.os.symlink")
 @mock.patch("tzupdate.os.path.isfile")
-def test_link_localtime(isfile_mock, symlink_mock, unlink_mock):
+@mock.patch("tzupdate.os.path.exists")
+def test_link_localtime(exists_mock, isfile_mock, symlink_mock, replace_mock):
     isfile_mock.return_value = True
+
+    # Don't check st_dev
+    exists_mock.return_value = False
+
     expected = os.path.join(tzupdate.DEFAULT_ZONEINFO_PATH, FAKE_TIMEZONE)
 
     zoneinfo_tz_path = tzupdate.link_localtime(
         FAKE_TIMEZONE, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
     )
 
-    assert unlink_mock.called_once_with([expected])
-    assert symlink_mock.called_once_with([expected, tzupdate.DEFAULT_LOCALTIME_PATH])
+    assert replace_mock.called_once_with(
+        [tzupdate.DEFAULT_LOCALTIME_PATH + "~", tzupdate.DEFAULT_LOCALTIME_PATH]
+    )
+    assert symlink_mock.called_once_with(
+        [expected, tzupdate.DEFAULT_LOCALTIME_PATH + "~"]
+    )
+
+    assert zoneinfo_tz_path == expected
+
+
+@mock.patch("tzupdate.os.replace")
+@mock.patch("tzupdate.os.path.isfile")
+@mock.patch("tzupdate.os.path.exists")
+@mock.patch("tzupdate.os.stat")
+@mock.patch("tzupdate.os.symlink")
+def test_link_localtime_mounts_different(
+    symlink_mock, stat_mock, exists_mock, isfile_mock, replace_mock
+):
+    isfile_mock.return_value = True
+
+    # Check st_dev
+    exists_mock.return_value = True
+
+    # It should fail since devices are not the same
+    first = os.stat_result((0, 0, 123, 0, 0, 0, 0, 0, 0, 0))
+    second = os.stat_result((0, 0, 456, 0, 0, 0, 0, 0, 0, 0))
+    stat_mock.side_effect = [first, second]
+
+    with pytest.raises(tzupdate.TimezoneUpdateException):
+        tzupdate.link_localtime(
+            FAKE_TIMEZONE,
+            tzupdate.DEFAULT_ZONEINFO_PATH,
+            tzupdate.DEFAULT_LOCALTIME_PATH,
+        )
+
+
+@mock.patch("tzupdate.os.replace")
+@mock.patch("tzupdate.os.path.isfile")
+@mock.patch("tzupdate.os.path.exists")
+@mock.patch("tzupdate.os.stat")
+@mock.patch("tzupdate.os.symlink")
+def test_link_localtime_mounts_same(
+    symlink_mock, stat_mock, exists_mock, isfile_mock, replace_mock
+):
+    isfile_mock.return_value = True
+
+    # Check st_dev
+    exists_mock.return_value = True
+
+    # It shouldn't fail since devices are the same
+    first = os.stat_result((0, 0, 123, 0, 0, 0, 0, 0, 0, 0))
+    second = os.stat_result((0, 0, 123, 0, 0, 0, 0, 0, 0, 0))
+    stat_mock.side_effect = [first, second]
+
+    expected = os.path.join(tzupdate.DEFAULT_ZONEINFO_PATH, FAKE_TIMEZONE)
+
+    zoneinfo_tz_path = tzupdate.link_localtime(
+        FAKE_TIMEZONE, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
+    )
 
     assert zoneinfo_tz_path == expected
 
@@ -138,11 +200,11 @@ def test_link_localtime_timezone_not_available(isfile_mock):
         )
 
 
-@mock.patch("tzupdate.os.unlink")
+@mock.patch("tzupdate.os.symlink")
 @mock.patch("tzupdate.os.path.isfile")
-def test_link_localtime_permission_denied(isfile_mock, unlink_mock):
+def test_link_localtime_permission_denied(isfile_mock, symlink_mock):
     isfile_mock.return_value = True
-    unlink_mock.side_effect = OSError(errno.EACCES, "Permission denied yo")
+    symlink_mock.side_effect = OSError(errno.EACCES, "Permission denied yo")
     with pytest.raises(OSError) as raise_cm:
         tzupdate.link_localtime(
             FAKE_TIMEZONE,
@@ -153,12 +215,12 @@ def test_link_localtime_permission_denied(isfile_mock, unlink_mock):
     assert raise_cm.value.errno == errno.EACCES
 
 
-@mock.patch("tzupdate.os.unlink")
+@mock.patch("tzupdate.os.symlink")
 @mock.patch("tzupdate.os.path.isfile")
-def test_link_localtime_oserror_not_permission(isfile_mock, unlink_mock):
+def test_link_localtime_oserror_not_permission(isfile_mock, symlink_mock):
     isfile_mock.return_value = True
     code = errno.ENOSPC
-    unlink_mock.side_effect = OSError(code, "No space yo")
+    symlink_mock.side_effect = OSError(code, "No space yo")
 
     with pytest.raises(OSError) as thrown_exc:
         tzupdate.link_localtime(
@@ -168,22 +230,6 @@ def test_link_localtime_oserror_not_permission(isfile_mock, unlink_mock):
         )
 
     assert thrown_exc.value.errno == code
-
-
-@mock.patch("tzupdate.os.unlink")
-@mock.patch("tzupdate.os.path.isfile")
-@mock.patch("tzupdate.os.symlink")
-def test_link_localtime_localtime_missing_no_raise(
-    symlink_mock, isfile_mock, unlink_mock
-):
-    isfile_mock.return_value = True
-    code = errno.ENOENT
-    unlink_mock.side_effect = OSError(code, "No such file or directory")
-
-    # This should handle OSError and not raise further
-    tzupdate.link_localtime(
-        FAKE_TIMEZONE, tzupdate.DEFAULT_ZONEINFO_PATH, tzupdate.DEFAULT_LOCALTIME_PATH
-    )
 
 
 @given(text(), text())
