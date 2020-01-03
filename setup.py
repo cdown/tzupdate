@@ -8,7 +8,7 @@ with open("README.rst") as readme_f:
 
 setup(
     name="tzupdate",
-    version="1.5.0",
+    version="2.0.0",
     description="Set the system timezone based on IP geolocation",
     long_description=README,
     url="https://github.com/cdown/tzupdate",
@@ -22,8 +22,6 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "License :: Public Domain",
         "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
