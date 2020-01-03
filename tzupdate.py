@@ -67,8 +67,9 @@ def get_timezone(ip, timeout=DEFAULT_HTTP_TIMEOUT, services=SERVICES):
         timezone = q.get(block=True, timeout=timeout)
     except Empty:
         raise TimezoneAcquisitionError(
-            "No usable response from any API in {} seconds".format(timeout)
-        )
+            "No usable response from any API in {} seconds. Consider "
+            "increasing --timeout if your connection is slow.".format(timeout)
+        ) from None
     finally:
         for t in threads:
             t.terminate()
