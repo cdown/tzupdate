@@ -6,12 +6,9 @@ from setuptools import setup
 with open("README.rst") as readme_f:
     README = readme_f.read()
 
-with open("requirements.txt") as requirements_f:
-    REQUIREMENTS = requirements_f.readlines()
-
 setup(
     name="tzupdate",
-    version="1.5.0",
+    version="2.0.0",
     description="Set the system timezone based on IP geolocation",
     long_description=README,
     url="https://github.com/cdown/tzupdate",
@@ -19,14 +16,16 @@ setup(
     author="Chris Down",
     author_email="chris@chrisdown.name",
     py_modules=["tzupdate"],
-    install_requires=REQUIREMENTS,
     entry_points={"console_scripts": ["tzupdate=tzupdate:main"]},
     keywords="timezone localtime tz",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: Public Domain",
-        "Programming Language :: Python :: 2",
+        "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: System",
         "Topic :: System :: Networking :: Time Synchronization",
         "Topic :: Utilities",

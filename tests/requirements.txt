@@ -1,6 +1,7 @@
-nose
-hypothesis
-httpretty
-parameterized
-mock
-ipaddress
+pytest>=4,<5
+pytest-cov>=2,<3
+hypothesis>=4,<5
+httpretty>=0.9,<0.10
+parameterized>=0.7,<0.8
+mock>=3,<4
+ipaddress>=1,<2

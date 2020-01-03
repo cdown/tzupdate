@@ -3,7 +3,7 @@
 import httpretty
 import tzupdate
 import mock
-from nose.tools import assert_false, assert_raises
+import pytest
 from tests._test_utils import FAKE_SERVICES, FAKE_TIMEZONE, setup_basic_api_response
 
 
@@ -29,8 +29,8 @@ def test_print_only_no_link(link_localtime_mock, deb_tz_mock):
     setup_basic_api_response()
     args = ["-p"]
     tzupdate.main(args, services=FAKE_SERVICES)
-    assert_false(link_localtime_mock.called)
-    assert_false(deb_tz_mock.called)
+    assert not link_localtime_mock.called
+    assert not deb_tz_mock.called
 
 
 @mock.patch("tzupdate.write_debian_timezone")
@@ -38,8 +38,8 @@ def test_print_only_no_link(link_localtime_mock, deb_tz_mock):
 def test_print_sys_tz_no_link(link_localtime_mock, deb_tz_mock):
     args = ["--print-system-timezone"]
     tzupdate.main(args, services=FAKE_SERVICES)
-    assert_false(link_localtime_mock.called)
-    assert_false(deb_tz_mock.called)
+    assert not link_localtime_mock.called
+    assert not deb_tz_mock.called
 
 
 @httpretty.activate
@@ -91,5 +91,5 @@ def test_timeout_results_in_exception(process_mock):
     # should time out
     setup_basic_api_response()
     args = ["-s", "0.01"]
-    with assert_raises(tzupdate.TimezoneAcquisitionError):
+    with pytest.raises(tzupdate.TimezoneAcquisitionError):
         tzupdate.main(args, services=FAKE_SERVICES)
