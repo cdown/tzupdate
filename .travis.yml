@@ -1,19 +1,39 @@
 dist: xenial
 language: python
 cache: pip
+install: pip install --upgrade tox
+script: tox
 
 # Drop once EOL: https://devguide.python.org/#status-of-python-branches
-python:
-  - '2.7'
-  - '3.5'
-  - '3.6'
-
-install: pip install tox
-script:
-  - 'tox'
-
-matrix:
+jobs:
   include:
-    # "coverage" toxenv runs tests, so no need to run TOXENV=py37
+    ## Linux
+
+    # CPython (in official virtualenv)
+    - python: '3.5'
+    - python: '3.6'
+    # 3.7 is below
+
+    # PyPy (in official virtualenv)
+    - python: pypy3
+      env: TOXENV=pypy3
+
+    # Correctness tests. "coverage" toxenv runs tests, so no need to run
+    # TOXENV=py38.
+    #
+    # TODO: pytype doesn't yet support 3.8, switch this with 3.8 above when it
+    # does
+
     - python: '3.7'
       env: TOXENV=black,pylint,pytype,bandit,coverage
+
+    ## Special jobs
+
+    # Run long Hypothesis tests for release/cron
+    - if: branch =~ ^release/.*$ or type = cron
+      python: '3.8'
+      env: TOXENV=py-release
+
+notifications:
+  email:
+    - travis+tzupdate@chrisdown.name

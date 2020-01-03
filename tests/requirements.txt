@@ -1,4 +1,5 @@
-nose>=1,<2
+pytest>=4,<5
+pytest-cov>=2,<3
 hypothesis>=4,<5
 httpretty>=0.9,<0.10
 parameterized>=0.7,<0.8
