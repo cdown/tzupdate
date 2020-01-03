@@ -32,7 +32,7 @@ settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "base"))
 def test_get_timezone_for_ip(ip, service):
     fake_queue = mock.Mock()
     setup_basic_api_response()
-    tzupdate.get_timezone_for_ip(ip=ip, service=service, queue_obj=fake_queue)
+    tzupdate.get_timezone_for_ip(ip_addr=ip, service=service, queue_obj=fake_queue)
 
     if ip is not None:
         assert ip in httpretty.last_request().path
@@ -53,7 +53,7 @@ def test_get_timezone_for_ip_empty_resp(ip, service):
     fake_queue = mock.Mock()
     setup_basic_api_response(empty_resp=True)
     assert (
-        tzupdate.get_timezone_for_ip(ip=ip, service=service, queue_obj=fake_queue)
+        tzupdate.get_timezone_for_ip(ip_addr=ip, service=service, queue_obj=fake_queue)
         is None
     )
 
@@ -64,7 +64,7 @@ def test_get_timezone_for_ip_empty_val(ip, service):
     fake_queue = mock.Mock()
     setup_basic_api_response(empty_val=True)
     assert (
-        tzupdate.get_timezone_for_ip(ip=ip, service=service, queue_obj=fake_queue)
+        tzupdate.get_timezone_for_ip(ip_addr=ip, service=service, queue_obj=fake_queue)
         is None
     )
 
@@ -79,7 +79,7 @@ def test_get_timezone_for_ip_doesnt_raise(ip, service, status):
     fake_queue = mock.Mock()
     setup_basic_api_response(status=status)
     assert (
-        tzupdate.get_timezone_for_ip(ip=ip, service=service, queue_obj=fake_queue)
+        tzupdate.get_timezone_for_ip(ip_addr=ip, service=service, queue_obj=fake_queue)
         is None
     )
 

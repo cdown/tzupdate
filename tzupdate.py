@@ -19,7 +19,7 @@ from queue import Empty
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 DEFAULT_ZONEINFO_PATH = "/usr/share/zoneinfo"
 DEFAULT_LOCALTIME_PATH = "/etc/localtime"
@@ -49,32 +49,33 @@ def get_deep(item, keys):
     return tmp
 
 
-def get_timezone(ip, timeout=DEFAULT_HTTP_TIMEOUT, services=SERVICES):
-    q = Queue()
+def get_timezone(ip_addr, timeout=DEFAULT_HTTP_TIMEOUT, services=SERVICES):
+    api_resp_queue = Queue()
 
     threads = [
-        Process(target=get_timezone_for_ip, args=(ip, svc, q)) for svc in services
+        Process(target=get_timezone_for_ip, args=(ip_addr, svc, api_resp_queue))
+        for svc in services
     ]
 
-    for t in threads:
-        t.start()
+    for thread in threads:
+        thread.start()
 
     try:
-        timezone = q.get(block=True, timeout=timeout)
+        timezone = api_resp_queue.get(block=True, timeout=timeout)
     except Empty:
         raise TimezoneAcquisitionError(
             "No usable response from any API in {} seconds. Consider "
             "increasing --timeout if your connection is slow.".format(timeout)
         ) from None
     finally:
-        for t in threads:
-            t.terminate()
+        for thread in threads:
+            thread.terminate()
 
     return timezone
 
 
-def get_timezone_for_ip(ip, service, queue_obj):
-    api_url = service.url.format(ip=ip or "")
+def get_timezone_for_ip(ip_addr, service, queue_obj):
+    api_url = service.url.format(ip=ip_addr or "")
 
     try:
         # The caller is responsible for providing a service string which
@@ -82,15 +83,15 @@ def get_timezone_for_ip(ip, service, queue_obj):
         # warning about that
         api_response_obj = urlopen(api_url)  # nosec
     except HTTPError as thrown_exc:
-        log.warning("%s returned %d, ignoring", api_url, thrown_exc.code)
+        LOG.warning("%s returned %d, ignoring", api_url, thrown_exc.code)
         return
 
     api_response = json.loads(api_response_obj.read().decode("utf8"))
-    log.debug("API response from %s: %r", api_url, api_response)
+    LOG.debug("API response from %s: %r", api_url, api_response)
 
     try:
-        tz = get_deep(api_response, service.tz_keys)
-        if not tz:
+        timezone = get_deep(api_response, service.tz_keys)
+        if not timezone:
             raise KeyError
     except KeyError:
         msg = "Unspecified API error for {}.".format(service.url)
@@ -99,9 +100,9 @@ def get_timezone_for_ip(ip, service, queue_obj):
                 msg = get_deep(api_response, service.error_keys)
             except KeyError:
                 pass
-        log.warning("%s failed: %s", api_url, msg)
+        LOG.warning("%s failed: %s", api_url, msg)
     else:
-        queue_obj.put(tz)
+        queue_obj.put(timezone)
 
 
 def write_debian_timezone(timezone, debian_timezone_path, must_exist=True):
@@ -143,9 +144,9 @@ def check_directory_traversal(base_dir, requested_path):
     shares a common prefix with the absolute path of the requested zoneinfo
     file.
     """
-    log.debug("Checking for traversal in path %s", requested_path)
+    LOG.debug("Checking for traversal in path %s", requested_path)
     requested_path_abs = os.path.abspath(requested_path)
-    log.debug("Absolute path of requested path is %s", requested_path_abs)
+    LOG.debug("Absolute path of requested path is %s", requested_path_abs)
     if os.path.commonprefix([base_dir, requested_path_abs]) != base_dir:
         raise DirectoryTraversalError(
             "%r (%r) is outside base directory %r, refusing to run"
@@ -278,7 +279,7 @@ def main(argv=None, services=SERVICES):
 
     if args.timezone:
         timezone = args.timezone
-        log.debug("Using explicitly passed timezone: %s", timezone)
+        LOG.debug("Using explicitly passed timezone: %s", timezone)
     else:
         timezone = get_timezone(args.ip, timeout=args.timeout, services=services)
 
