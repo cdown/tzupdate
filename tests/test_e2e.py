@@ -2,7 +2,7 @@
 
 import httpretty
 import tzupdate
-import mock
+from unittest import mock
 import pytest
 from tests._test_utils import FAKE_SERVICES, FAKE_TIMEZONE, setup_basic_api_response
 

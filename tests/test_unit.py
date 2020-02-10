@@ -4,7 +4,7 @@ import tzupdate
 import httpretty
 import os
 import errno
-import mock
+from unittest import mock
 import pytest
 from tests._test_utils import (
     IP_ADDRESSES,
