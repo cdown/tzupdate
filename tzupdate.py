@@ -182,7 +182,7 @@ def link_localtime(timezone, zoneinfo_path, localtime_path):
                 thrown_exc.errno,
                 'Could not link "%s" (%s). Are you root?'
                 % (localtime_temp_path, thrown_exc),
-            )
+            ) from thrown_exc
         raise
 
     # To be atomic, these need to be on the same device.
