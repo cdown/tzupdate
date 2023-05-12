@@ -53,7 +53,7 @@ fn get_nested_value(mut data: Value, keys: &[&str]) -> Option<Value> {
 fn get_timezone_for_ip(url: String, service: &GeoIPService, sender: Sender<String>) -> Result<()> {
     let res = ureq::get(&url).call()?;
     let val = match get_nested_value(res.into_json()?, service.tz_keys)
-        .context("Invalid data for {url}")?
+        .with_context(|| format!("Invalid data for {url}"))?
     {
         Value::String(s) => s,
         _ => bail!("Timezone field for {url} is not a string"),
