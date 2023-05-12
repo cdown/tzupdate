@@ -1,9 +1,0 @@
-include LICENSE
-include MANIFEST.in
-include README.rst
-include .coveragerc
-
-recursive-include * requirements.txt
-
-recursive-exclude * *.py[co]
-recursive-exclude * __pycache__
