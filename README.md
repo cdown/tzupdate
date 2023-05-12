@@ -2,6 +2,14 @@
 
 tzupdate is a fully automated utility to set the system time using geolocation.
 
+## Features
+
+- Small, easy to understand codebase
+- Queries multiple geolocation services in parallel and returns the first with
+  a successful result
+- Protects against directory traversal and invalid results when linking
+  /etc/localtime
+
 ## Installation
 
     cargo install tzupdate
