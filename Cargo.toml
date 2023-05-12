@@ -1,6 +1,6 @@
 [package]
 name = "tzupdate"
-version = "2.1.0"
+version = "3.0.0"
 edition = "2021"
 authors = ["Chris Down <chris@chrisdown.name>"]
 description = "Set the system timezone based on IP geolocation."
