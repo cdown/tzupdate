@@ -1,7 +1,7 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, error};
 use serde_json::Value;
-use std::sync::mpsc::{channel, Sender};
+use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::thread;
 use std::time::Duration;
 
@@ -68,8 +68,8 @@ fn get_timezone_for_ip(url: String, service: &GeoIPService, sender: Sender<Strin
 /// Spawn background HTTP requests, getting the first timezone returned.
 pub fn get_timezone(ip_addr: String, timeout: Duration) -> Result<String> {
     let (sender, receiver) = channel();
-    for svc in SERVICES {
-        let sender = sender.clone();
+
+    for (svc, sender) in SERVICES.iter().zip(std::iter::repeat(sender)) {
         let url = svc.url.replace("{ip}", &ip_addr);
         // For our small number of services, this makes more sense than using a full async runtime
         thread::spawn(move || {
@@ -78,7 +78,11 @@ pub fn get_timezone(ip_addr: String, timeout: Duration) -> Result<String> {
             }
         });
     }
-    receiver
-        .recv_timeout(timeout)
-        .context("Timed out, consider increasing --timeout")
+
+    receiver.recv_timeout(timeout).map_err(|err| match err {
+        RecvTimeoutError::Disconnected => {
+            anyhow!("All APIs failed. Run with RUST_LOG=tzupdate=debug for more information.")
+        }
+        RecvTimeoutError::Timeout => anyhow!("All APIs timed out, consider increasing --timeout."),
+    })
 }
