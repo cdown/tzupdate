@@ -14,6 +14,10 @@ struct GeoIPService {
 /// meaning to use the source IP for the request.
 static SERVICES: &[GeoIPService] = &[
     GeoIPService {
+        url: "https://geoip.chrisdown.name/{ip}",
+        tz_keys: &["location", "time_zone"],
+    },
+    GeoIPService {
         url: "https://api.ipbase.com/v1/json/{ip}",
         tz_keys: &["time_zone"],
     },
