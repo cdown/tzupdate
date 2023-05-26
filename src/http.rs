@@ -1,5 +1,5 @@
 use anyhow::{anyhow, bail, Context, Result};
-use log::{debug, error};
+use log::debug;
 use serde_json::Value;
 use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::thread;
@@ -78,7 +78,7 @@ pub fn get_timezone(ip_addr: String, timeout: Duration) -> Result<String> {
         // For our small number of services, this makes more sense than using a full async runtime
         thread::spawn(move || {
             if let Err(err) = get_timezone_for_ip(url, svc, sender) {
-                error!("{err}");
+                debug!("{err}");
             }
         });
     }
