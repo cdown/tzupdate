@@ -13,10 +13,8 @@ use std::path::{Path, PathBuf};
 ///
 /// This function checks that the base directory of the zoneinfo database shares a common prefix
 /// with the absolute path of the requested zoneinfo file.
-fn safe_canonicalise_path(base: &Path, path: &Path) -> io::Result<PathBuf> {
-    let base = fs::canonicalize(base)?;
-    let path = fs::canonicalize(path)?;
-    if path.starts_with(&base) {
+fn safe_canonicalise_path(base: PathBuf, path: PathBuf) -> io::Result<PathBuf> {
+    if path.canonicalize()?.starts_with(base.canonicalize()?) {
         Ok(path)
     } else {
         Err(io::Error::new(
@@ -58,7 +56,7 @@ pub fn link_localtime(
 ) -> Result<()> {
     let localtime_tmp_path = get_tmp_path(&localtime_path)?;
     let unsafe_tz_path = zoneinfo_path.join(timezone);
-    let tz_path = match safe_canonicalise_path(&zoneinfo_path, &unsafe_tz_path) {
+    let tz_path = match safe_canonicalise_path(zoneinfo_path, unsafe_tz_path) {
         Ok(path) => path,
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
             bail!("Timezone \"{timezone}\" requested, but this timezone is not available on your operating system.");
@@ -130,20 +128,20 @@ mod tests {
     fn canonicalise_normal() {
         let base = PathBuf::from("/etc");
         let path = PathBuf::from("/etc/passwd");
-        assert!(safe_canonicalise_path(&base, &path).is_ok());
+        assert!(safe_canonicalise_path(base, path).is_ok());
     }
 
     #[test]
     fn canonicalise_back_and_forth() {
         let base = PathBuf::from("/etc");
         let path = PathBuf::from("/etc/../etc/passwd");
-        assert!(safe_canonicalise_path(&base, &path).is_ok());
+        assert!(safe_canonicalise_path(base, path).is_ok());
     }
 
     #[test]
     fn canonicalise_failure() {
         let base = PathBuf::from("/etc");
         let path = PathBuf::from("/etc/../passwd");
-        assert!(safe_canonicalise_path(&base, &path).is_err());
+        assert!(safe_canonicalise_path(base, path).is_err());
     }
 }
