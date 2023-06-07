@@ -17,5 +17,5 @@ clap = { version = "4.3.2", default-features = false, features = ["std", "derive
 env_logger = { version = "0.10.0", features = ["humantime"], default-features = false }
 log = "0.4.18"
 serde_json = { version = "1.0.96", default-features = false }
-tempfile = "3.5.0"
+tempfile = "3.6.0"
 ureq = { version = "2.6.2", default-features = false, features = ["json", "rustls", "tls"] }
