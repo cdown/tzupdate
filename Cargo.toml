@@ -18,4 +18,4 @@ env_logger = { version = "0.10.0", features = ["humantime"], default-features = 
 log = "0.4.19"
 serde_json = { version = "1.0.96", default-features = false }
 tempfile = "3.6.0"
-ureq = { version = "2.6.2", default-features = false, features = ["json", "rustls", "tls"] }
+ureq = { version = "2.7.1", default-features = false, features = ["json", "rustls", "tls"] }
