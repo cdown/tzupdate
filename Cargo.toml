@@ -13,7 +13,7 @@ rust-version = "1.64.0"
 
 [dependencies]
 anyhow = "1.0.71"
-clap = { version = "4.3.11", default-features = false, features = ["std", "derive", "help"] }
+clap = { version = "4.3.22", default-features = false, features = ["std", "derive", "help"] }
 env_logger = { version = "0.10.0", features = ["humantime"], default-features = false }
 log = "0.4.19"
 serde_json = { version = "1.0.100", default-features = false }
