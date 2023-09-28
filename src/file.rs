@@ -106,6 +106,7 @@ pub fn write_timezone(timezone: &str, filename: PathBuf, always_write: bool) -> 
     let mut file = match fs::OpenOptions::new()
         .write(true)
         .create(always_write)
+        .truncate(true)
         .mode(0o644)
         .open(&filename)
     {
