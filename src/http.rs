@@ -37,6 +37,10 @@ static SERVICES: &[GeoIPService] = &[
         url: "https://ipwho.is/{ip}",
         tz_keys: &["timezone", "id"],
     },
+    GeoIPService {
+        url: "https://ipinfo.io/{ip}/json",
+        tz_keys: &["timezone"],
+    },
 ];
 
 /// Given &["foo", "bar", "baz"], retrieve the value at data["foo"]["bar"]["baz"].
