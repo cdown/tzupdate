@@ -27,6 +27,16 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy -- -D warnings
 
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+      - run: cargo install cargo-msrv
+      - run: cargo msrv verify
+
 on:
   push:
   pull_request:
