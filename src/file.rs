@@ -17,14 +17,11 @@ fn safe_canonicalise_path(base: PathBuf, path: PathBuf) -> io::Result<PathBuf> {
     if path.canonicalize()?.starts_with(base.canonicalize()?) {
         Ok(path)
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "Directory traversal detected, {} is outside of {}",
-                path.display(),
-                base.display()
-            ),
-        ))
+        Err(io::Error::other(format!(
+            "Directory traversal detected, {} is outside of {}",
+            path.display(),
+            base.display()
+        )))
     }
 }
 
