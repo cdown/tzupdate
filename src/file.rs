@@ -79,7 +79,14 @@ pub fn link_localtime(
 
     // We should seek to avoid avoid /etc/localtime disappearing, even briefly, to avoid
     // applications being unhappy -- that's why we insist on atomic rename.
-    if localtime_tmp_path.metadata()?.st_dev() != localtime_path.metadata()?.st_dev() {
+    let tmp_dev = localtime_tmp_path.metadata()?.st_dev();
+    let target_dev = localtime_path
+        .parent()
+        .context("localtime path has no parent")?
+        .metadata()?
+        .st_dev();
+
+    if tmp_dev != target_dev {
         fs::remove_file(&localtime_tmp_path)?;
         bail!(
             "Cannot atomically rename, {} and {} are not on the same device",
@@ -144,5 +151,29 @@ mod tests {
         let base = PathBuf::from("/etc");
         let path = PathBuf::from("/etc/../passwd");
         assert!(safe_canonicalise_path(base, path).is_err());
+    }
+
+    #[test]
+    fn link_localtime_missing_target() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        let zoneinfo_path = temp_path.join("zoneinfo");
+        fs::create_dir_all(&zoneinfo_path).unwrap();
+        let tz_file = zoneinfo_path.join("America").join("Toronto");
+        fs::create_dir_all(tz_file.parent().unwrap()).unwrap();
+        fs::write(&tz_file, "fake timezone data").unwrap();
+
+        let localtime_path = temp_path.join("localtime");
+
+        let result = link_localtime("America/Toronto", localtime_path.clone(), zoneinfo_path);
+        assert!(
+            result.is_ok(),
+            "link_localtime should succeed when target doesn't exist: {:?}",
+            result
+        );
+
+        assert!(localtime_path.exists());
+        assert!(localtime_path.is_symlink());
     }
 }
