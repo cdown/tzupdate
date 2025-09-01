@@ -12,10 +12,10 @@ license = "MIT"
 rust-version = "1.74"
 
 [dependencies]
-anyhow = "1.0.93"
-clap = { version = "4.5.21", default-features = false, features = ["std", "derive", "help"] }
-env_logger = { version = "0.11.5", features = ["humantime"], default-features = false }
-log = "0.4.22"
-serde_json = { version = "1.0.133", default-features = false }
-tempfile = "3.14.0"
-ureq = { version = "2.10.1", default-features = false, features = ["json", "tls"] }
+anyhow = "1.0.99"
+clap = { version = "4.5.46", default-features = false, features = ["std", "derive", "help"] }
+env_logger = { version = "0.11.8", features = ["humantime"], default-features = false }
+log = "0.4.27"
+serde_json = { version = "1.0.143", default-features = false }
+tempfile = "3.21.0"
+ureq = { version = "3.1.0", default-features = false, features = ["json", "rustls"] }
