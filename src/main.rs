@@ -34,6 +34,13 @@ struct Config {
     #[arg(
         short,
         long,
+        help = "use consensus to choose timezone instead of first response"
+    )]
+    consensus: bool,
+
+    #[arg(
+        short,
+        long,
         help = "path to root of the zoneinfo database",
         default_value = "/usr/share/zoneinfo"
     )]
@@ -78,7 +85,13 @@ fn main() -> Result<()> {
     let cfg = Config::parse();
     let tz = match cfg.timezone {
         Some(tz) => tz,
-        None => http::get_timezone(cfg.ip.unwrap_or_default(), cfg.timeout)?,
+        None => {
+            if cfg.consensus {
+                http::get_timezone_consensus(cfg.ip.unwrap_or_default(), cfg.timeout)?
+            } else {
+                http::get_timezone_first(cfg.ip.unwrap_or_default(), cfg.timeout)?
+            }
+        }
     };
 
     if cfg.print_only {
