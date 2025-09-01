@@ -70,8 +70,8 @@ fn get_nested_value(mut data: Value, keys: &[&str]) -> Option<Value> {
 }
 
 /// A single service worker, racing with others as part of `get_timezone`.
-fn get_timezone_for_ip(url: String, service: &GeoIPService, sender: Sender<String>) -> Result<()> {
-    let mut res = ureq::get(&url).call()?;
+fn get_timezone_for_ip(url: &str, service: &GeoIPService, sender: Sender<String>) -> Result<()> {
+    let mut res = ureq::get(url).call()?;
     let val = match get_nested_value(res.body_mut().read_json()?, service.tz_keys)
         .with_context(|| format!("Invalid data for {url}"))?
     {
@@ -93,8 +93,8 @@ fn spawn_requests(ip_addr: &str) -> SpawnedRequests {
         let url = svc.url.replace("{ip}", ip_addr);
         // For our small number of services, this makes more sense than using a full async runtime
         thread::spawn(move || {
-            if let Err(err) = get_timezone_for_ip(url, svc, sender) {
-                debug!("{err}");
+            if let Err(err) = get_timezone_for_ip(&url, svc, sender) {
+                debug!("{url}: {err}");
             }
         });
     }
